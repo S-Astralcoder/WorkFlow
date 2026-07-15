@@ -35,7 +35,11 @@ jobs:
       - name: pyright check
         run: uv run pyright
       
+      # pytest
+      - name: pytest run
+        run: uv run pytest
 
+      
       
 
       
