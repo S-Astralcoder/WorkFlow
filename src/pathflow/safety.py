@@ -4,7 +4,7 @@ from pathvalidate import is_valid_filepath, is_valid_filename
 class FileSafety:
     @staticmethod
     def valid_path_string(path : str):
-        return is_valid_filepath(path)
+        return is_valid_filepath(file_path=path, platform="auto")
             
     @staticmethod
     def does_exists(path : str | Path):
@@ -27,6 +27,6 @@ class FileSafety:
 
     @staticmethod
     def check_if_valid_name(name : str) -> bool:
-        return is_valid_filename(filename=name, platform="Windows")
+        return is_valid_filename(filename=name, platform="auto")
     
     

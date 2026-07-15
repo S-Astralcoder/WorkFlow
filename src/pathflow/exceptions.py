@@ -53,3 +53,7 @@ class InvalidFileName(SystemExit):
 class InvalidFileType(SystemExit):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
+
+class WorkspacePathInvalid(SystemExit):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)

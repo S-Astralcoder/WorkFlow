@@ -4,7 +4,7 @@ from pathlib import Path
 
 # Internal 
 from pathflow.safety import FileSafety
-from pathflow.exceptions import InvalidFilePath, OutOfScope, WorkspaceProtection
+from pathflow.exceptions import InvalidFilePath, OutOfScope, WorkspacePathInvalid, WorkspaceProtection
 
 
 class BaseCommand:
@@ -22,7 +22,11 @@ class BaseCommand:
         """validates if the path is correct"""
         if not FileSafety.valid_path_string(path=path):
             raise InvalidFilePath("Invalid path: enter a valid file or folder path.")
-        return Path(path).resolve()
+        
+        workspace_path = Path(path).resolve()
+        if not FileSafety.does_exists(path=workspace_path):
+            raise WorkspacePathInvalid("Invalid Path : Workspace doesn't exist; Enter a valid workspace path")
+        return workspace_path
 
     def validate_workspace_scope(self, workspace : Path, path : Path, inside : bool = True):
         """checks if the action path is outside the workspace. to prevent operations outside of workspace"""
