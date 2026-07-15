@@ -29,4 +29,6 @@ class BaseCommand:
             if FileSafety.same_path(path1=workspace, path2=path):
                 raise WorkspaceProtection("Operation on workspace is not allowed")
         
-    
+
+class TransferCommand(BaseCommand):
+    pass

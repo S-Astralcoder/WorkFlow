@@ -25,7 +25,7 @@ jobs:
 
       # installs required dependencies
       - name: Install dependencies
-        run: uv sync --force
+        run: uv sync --locked
 
       # ruff check
       - name: ruff check

@@ -34,3 +34,11 @@ class CollisionError(SystemExit):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
 
+class SameFileError(SystemExit):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
+class InvalidSelfMove(SystemExit):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+

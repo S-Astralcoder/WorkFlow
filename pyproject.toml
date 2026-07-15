@@ -9,6 +9,7 @@ authors = [
 requires-python = ">=3.12"
 dependencies = [
     "pathvalidate>=3.3.1",
+    "pydantic>=2.13.4",
     "rich>=15.0.0",
 ]
 
