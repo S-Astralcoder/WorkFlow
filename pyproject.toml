@@ -1,0 +1,37 @@
+[project]
+name = "pathflow"
+version = "0.1.0"
+description = "A python package acts as an automated workspace manager that reads a TOML script to execute a sequence of file and folder operations."
+readme = "README.md"
+authors = [
+    { name = "S-Astralcoder", email = "suraj.astralcode.ai@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "pathvalidate>=3.3.1",
+    "rich>=15.0.0",
+]
+
+[project.scripts]
+pathflow = "pathflow:main"
+
+[build-system]
+requires = ["uv_build>=0.11.6,<0.12.0"]
+build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1.411",
+    "pytest>=9.1.1",
+    "ruff>=0.15.21",
+]
+
+[tool.pyright]
+include = ["src", "tests"]
+executionEnvironments = [
+  { root = "src" }
+]
+typeCheckingMode = "strict"
