@@ -20,6 +20,9 @@ class CommandLine:
         # move
         self.add_move_command_line()
 
+        # delete
+        self.add_delete_command_line()
+
 
     def add_global_tags(self):
         self.arg.add_argument("-a", "--allow", action="store_true", help="Bypass permissions")
@@ -43,6 +46,11 @@ class CommandLine:
         move_parser = self.operations.add_parser("move")
         move_parser.add_argument("source_path", help="the file or folder path to be moved")
         move_parser.add_argument("destination_path", help="the destination to move to")
+
+    def add_delete_command_line(self):
+        delete_parser = self.operations.add_parser("delete")
+        delete_parser.add_argument("path", help="the file or folder path to be deleted")
+
 
     def get_parser(self, args : Optional[List[str]] = None):
         return self.arg.parse_args(args=args)

@@ -6,6 +6,7 @@ class Status(Enum):
     SUCCESSFUL = auto()
     FAILED = auto()
     DRY_RUN = auto()
+    SKIPPED = auto()
 
 
 

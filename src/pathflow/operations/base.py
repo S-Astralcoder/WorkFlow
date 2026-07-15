@@ -8,8 +8,9 @@ from pathflow.exceptions import InvalidFilePath, OutOfScope, WorkspaceProtection
 
 
 class BaseCommand:
+    """A standard class to be avoid repeated code"""
     def __init__(self, args : argparse.Namespace) -> None:
-        # global
+        # global tags
         self.allow : bool = args.allow
         self.force : bool = args.force
         self.dry_run : bool = args.dry_run
@@ -18,17 +19,16 @@ class BaseCommand:
         self.is_file : bool
 
     def _validate_path(self, path : str):
+        """validates if the path is correct"""
         if not FileSafety.valid_path_string(path=path):
             raise InvalidFilePath("The given path is invalid, enter a valid path")
         return Path(path).resolve()
 
     def validate_workspace_scope(self, workspace : Path, path : Path, inside : bool = True):
+        """checks if the action path is outside the workspace. to prevent operations outside of workspace"""
         if not FileSafety.is_relative_to(path1=workspace, path2=path):
             raise OutOfScope("The action path is outside of workspace scope")
         if inside:
             if FileSafety.same_path(path1=workspace, path2=path):
                 raise WorkspaceProtection("Operation on workspace is not allowed")
         
-
-class TransferCommand(BaseCommand):
-    pass

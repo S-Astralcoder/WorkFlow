@@ -23,19 +23,20 @@ class CopyCommand(BaseCommand):
         self.validate_workspace_scope(workspace=self.workspace, path=self.source_path)
         self.validate_workspace_scope(workspace=self.workspace, path=self.destination_path)
 
-
         if not self.force:
             self._safe_check()
         
         self._mandatory_check()
 
     def _validate_source_path(self, path : str) -> Path:
+        """Same validation but added check for if path exists"""
         source_path = self._validate_path(path=path)
         if not FileSafety.does_exists(path=source_path):
             raise SourceNotFoundError("The given source path doesn't exist")
         return source_path
 
     def _validate_destination_path(self, path : str) -> Path:
+        """Same as above but also checks if the destination is a folder"""
         destination_path = self._validate_path(path=path)
         if not FileSafety.does_exists(path=destination_path):
             raise SourceNotFoundError("The given source path doesn't exist")
@@ -44,18 +45,20 @@ class CopyCommand(BaseCommand):
         return destination_path
 
     def _safe_check(self):
+        """Again optional safety check. to prevent overwrites"""
         if any([self.source_path.name == item.name for item in self.destination_path.iterdir()]):
             raise CollisionError(f"{self.source_path.name} Already exists in {self.destination_path}, use --force to continue")
 
     def _mandatory_check(self):
+        """Check that is very import to prevent cascaded copy loop (i made that term up)"""
         if FileSafety.same_path(path1=self.source_path, path2=self.destination_path):
             raise SameFileError("given path and destination are same. enter a different destination")
 
     def execute_command(self) -> CommandResult:
+        """executes command while taking tags into consideration"""
         if self.dry_run:
             item_type = "file" if self.is_file else "folder"
             return CommandResult(status=Status.DRY_RUN, message=f"Would Copy {item_type} {self.source_path.name} to {self.destination_path}")
-        
         try:
             if self.is_file:
                 shutil.copy2(src=self.source_path, dst=self.destination_path / self.source_path.name)

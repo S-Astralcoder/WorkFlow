@@ -11,6 +11,7 @@ from pathflow.safety import FileSafety
 
 
 class CreateCommand(BaseCommand):
+    """Validates and executes create file/folder operation"""
     def __init__(self, args : argparse.Namespace) -> None:
         super().__init__(args=args)
         # states
@@ -20,7 +21,7 @@ class CreateCommand(BaseCommand):
         # path
         self.path : Path = self._validate_path(args.path)
 
-        self.validate_workspace_scope(workspace=self.workspace, path=self.path)
+        self.validate_workspace_scope(workspace=self.workspace, path=self.path) 
 
         if not self.recursive:
             self._check_parent_exists()
@@ -29,14 +30,17 @@ class CreateCommand(BaseCommand):
             self._safe_checks()
 
     def _safe_checks(self):
+        """A optional safety check to prevent accidental overwrites without permission"""
         if FileSafety.does_exists(path=self.path):
             raise FileAlreadyExists("The given path points to a existing directory, use --force to allow overwrites")
 
     def _check_parent_exists(self):
+        """checks it parent for the given path exists"""
         if not self.path.parent.exists():
             raise ParentNotFount("The given path's parent doesn't exist, use --recursive to create parent")
 
     def execute_command(self) -> CommandResult:
+        """just executes what else?"""
         if self.dry_run:
             item_type = "file" if self.is_file else "folder"
             return CommandResult(status=Status.DRY_RUN, message=f"Would Create {item_type} : {self.path}")
