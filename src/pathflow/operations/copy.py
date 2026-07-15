@@ -32,27 +32,27 @@ class CopyCommand(BaseCommand):
         """Same validation but added check for if path exists"""
         source_path = self._validate_path(path=path)
         if not FileSafety.does_exists(path=source_path):
-            raise SourceNotFoundError("The given source path doesn't exist")
+            raise SourceNotFoundError("Source path does not exist. Enter the path of an existing file or folder.")
         return source_path
 
     def _validate_destination_path(self, path : str) -> Path:
         """Same as above but also checks if the destination is a folder"""
         destination_path = self._validate_path(path=path)
         if not FileSafety.does_exists(path=destination_path):
-            raise SourceNotFoundError("The given source path doesn't exist")
+            raise SourceNotFoundError("Destination path does not exist. Enter the path of an existing folder.")
         if FileSafety.check_if_file(path=destination_path):
-            raise InvalidItemType("The given destination should be a folder")
+            raise InvalidItemType("Destination must be a folder; a file path cannot be used as the copy destination.")
         return destination_path
 
     def _safe_check(self):
         """Again optional safety check. to prevent overwrites"""
         if any([self.source_path.name == item.name for item in self.destination_path.iterdir()]):
-            raise CollisionError(f"{self.source_path.name} Already exists in {self.destination_path}, use --force to continue")
+            raise CollisionError(f"An item named '{self.source_path.name}' already exists in '{self.destination_path}'. Use --force to overwrite it.")
 
     def _mandatory_check(self):
         """Check that is very import to prevent cascaded copy loop (i made that term up)"""
         if FileSafety.same_path(path1=self.source_path, path2=self.destination_path):
-            raise SameFileError("given path and destination are same. enter a different destination")
+            raise SameFileError("Source and destination resolve to the same path. Choose a different destination folder.")
 
     def execute_command(self) -> CommandResult:
         """executes command while taking tags into consideration"""

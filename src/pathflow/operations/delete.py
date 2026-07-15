@@ -27,7 +27,7 @@ class DeleteCommand(BaseCommand):
     def _validate_target_path(self, path : str) -> Path:
         source_path = self._validate_path(path=path)
         if not FileSafety.does_exists(path=source_path):
-            raise ItemNotFound("The given path doesn't exist")
+            raise ItemNotFound("Delete target does not exist. Enter the path of an existing file or folder.")
         return source_path
 
     def execute_command(self, permission_func : Callable[[str],bool]) -> CommandResult:

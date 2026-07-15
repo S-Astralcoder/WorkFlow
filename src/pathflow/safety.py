@@ -1,6 +1,6 @@
 #External
 from pathlib import Path
-from pathvalidate import is_valid_filepath
+from pathvalidate import is_valid_filepath, is_valid_filename
 class FileSafety:
     @staticmethod
     def valid_path_string(path : str):
@@ -24,3 +24,9 @@ class FileSafety:
     @staticmethod
     def check_if_file(path : Path) -> bool:
         return path.is_file()
+
+    @staticmethod
+    def check_if_valid_name(name : str) -> bool:
+        return is_valid_filename(filename=name, platform="Windows")
+    
+    

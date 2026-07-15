@@ -19,7 +19,7 @@ class MoveCommand(CopyCommand):
         super()._mandatory_check()
 
         if FileSafety.is_relative_to(path1=self.source_path, path2=self.destination_path):
-            raise InvalidSelfMove("Moving items into it's child is invalid")
+            raise InvalidSelfMove("A folder cannot be moved into one of its own descendants. Choose a destination outside the source folder.")
 
     def execute_command(self) -> CommandResult:
         if self.dry_run:

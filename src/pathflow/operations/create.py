@@ -32,12 +32,12 @@ class CreateCommand(BaseCommand):
     def _safe_checks(self):
         """A optional safety check to prevent accidental overwrites without permission"""
         if FileSafety.does_exists(path=self.path):
-            raise FileAlreadyExists("The given path points to a existing directory, use --force to allow overwrites")
+            raise FileAlreadyExists("An item already exists at the target path. Use --force to allow the existing item to be overwritten.")
 
     def _check_parent_exists(self):
         """checks it parent for the given path exists"""
         if not self.path.parent.exists():
-            raise ParentNotFount("The given path's parent doesn't exist, use --recursive to create parent")
+            raise ParentNotFount("The target's parent folder does not exist. Use --recursive to create the missing parent folders.")
 
     def execute_command(self) -> CommandResult:
         """just executes what else?"""

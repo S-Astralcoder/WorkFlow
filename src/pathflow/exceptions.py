@@ -46,3 +46,10 @@ class ItemNotFound(SystemExit):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
 
+class InvalidFileName(SystemExit):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
+class InvalidFileType(SystemExit):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
