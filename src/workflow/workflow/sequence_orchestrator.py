@@ -54,7 +54,7 @@ class SequenceOperations:
         destination_path = Path(action_data.get("destination_path")).resolve()  # pyright: ignore[reportArgumentType]
         try:
             self.validate_workspace_scope(self.workspace, source_path)  
-            self.validate_workspace_scope(self.workspace, destination_path)  
+            self.validate_workspace_scope(self.workspace, destination_path, inside=False)  
         except SystemExit as e:
             raise InvalidWorkFlowScript(e) 
 
@@ -83,11 +83,13 @@ class SequenceOperations:
         
         if not FileSafety.check_if_file(path=source_path):
             if from_state_space:
+                new_virtual_paths : list[Path] = []
                 for virtual_path in self.would_exits:
                     if FileSafety.is_relative_to(path1=source_path, path2=virtual_path):
                         new_virtual_path = destination_path / Path(*virtual_path.parts[virtual_path.parts.index(source_path.name):])
-                        self.would_exits.add(new_virtual_path.resolve())
-                        self.would_removed.discard(new_virtual_path.resolve())
+                        new_virtual_paths.append(new_virtual_path.resolve())
+                self.would_exits.update(new_virtual_paths)
+                self.would_removed.difference_update(new_virtual_paths)
             else:
                 new_virtual_path = destination_path / source_path.name
                 self.would_exits.add(new_virtual_path.resolve())
@@ -135,12 +137,16 @@ class SequenceOperations:
         
         if not FileSafety.check_if_file(path=source_path):
             if from_state_space:
+                new_virtual_paths : list[Path] = []
+                removed_virtual_paths : list[Path] = []
                 for virtual_path in self.would_exits:
                     if FileSafety.is_relative_to(path1=source_path, path2=virtual_path):
                         new_virtual_path = destination_path / Path(*virtual_path.parts[virtual_path.parts.index(source_path.name):])
-                        self.would_exits.add(new_virtual_path.resolve()) # if you sit and think this code will make sense (hopefully)
-                        self.would_removed.add(virtual_path.resolve())
-                        self.would_removed.discard(new_virtual_path.resolve())
+                        new_virtual_paths.append(new_virtual_path.resolve())
+                        removed_virtual_paths.append(virtual_path.resolve())
+                self.would_exits.update(new_virtual_paths)
+                self.would_removed.update(removed_virtual_paths)
+                self.would_removed.difference_update(new_virtual_paths)
                 for paths in self.would_removed:
                     self.would_exits.remove(paths.resolve())
             else:

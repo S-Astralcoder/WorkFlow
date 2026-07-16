@@ -35,6 +35,6 @@ recursive = true
 [[actions]]
 operation = "copy"
 source_path = "./src/test/__init__.py"
-destination_path = "./src/to"
+destination_path = "."
 
 
