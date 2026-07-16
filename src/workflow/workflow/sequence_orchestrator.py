@@ -20,7 +20,7 @@ class SequenceOperations:
 
 
     def initial_setup(self):
-        self.would_exits.add(self.workspace)
+        self.would_exits.add(self.workspace.resolve())
 
     def validate_create_and_update_state(self, action_data : dict[Any, Any]):
         path = Path(action_data.get("path")).resolve()  # pyright: ignore[reportArgumentType]
@@ -30,14 +30,16 @@ class SequenceOperations:
         except SystemExit as e:
             raise InvalidWorkFlowScript(e) # unnecessary double raise but nah lets to it for consistency
         if not recursive:
-            if not FileSafety.does_exists(path.parent):
+            if not FileSafety.does_exists(path.parent) or path.parent.resolve() in self.would_removed:
                 if not path.parent.resolve() in self.would_exits:
                     raise InvalidWorkFlowScript(f"The parent for the operation create in action {action_data.get("id")} doesn't exist, use --recursive")
             self.would_exits.add(path.resolve())
+            self.would_removed.remove(path.resolve())
         else:
             recursive_path = path
             while not recursive_path.resolve() in self.would_exits:
                 self.would_exits.add(recursive_path.resolve())
+                self.would_removed.remove(recursive_path.resolve())
                 recursive_path = recursive_path.parent
 
     def validate_copy_and_update_state(self, action_data : dict[Any, Any]):
@@ -53,14 +55,16 @@ class SequenceOperations:
 
         # source validation
         if not FileSafety.does_exists(path=source_path):
-            if not source_path.resolve() in self.would_exits:
+            if not source_path.resolve() in self.would_exits or source_path.resolve() in self.would_removed:
                 raise InvalidWorkFlowScript(f"The given source path to be copied doesn't exist in action {action_data.get("id")}")
             from_state_space = True
         if not self.force:
-            if FileSafety.does_exists(path=destination_path / source_path.name):
-                raise InvalidWorkFlowScript(f"The given source already exists in destination in action {action_data.get("id")}")
+            target_des = destination_path / source_path.name
+            if FileSafety.does_exists(path=target_des):
+                if not target_des.resolve() in self.would_removed:
+                    raise InvalidWorkFlowScript(f"The given source already exists in destination in action {action_data.get("id")}")
 
-        if not FileSafety.does_exists(path=destination_path):
+        if not FileSafety.does_exists(path=destination_path) or destination_path.resolve() in self.would_removed:
             if not destination_path.resolve() in self.would_exits:
                 raise InvalidWorkFlowScript(f"The given destination doesn't exist in action {action_data.get("id")}")
 
@@ -76,18 +80,75 @@ class SequenceOperations:
                     if FileSafety.is_relative_to(path1=source_path, path2=virtual_path):
                         new_virtual_path = destination_path / Path(*virtual_path.parts[virtual_path.parts.index(source_path.name):])
                         self.would_exits.add(new_virtual_path.resolve())
+                        self.would_removed.remove(new_virtual_path.resolve())
             else:
                 new_virtual_path = destination_path / source_path.name
                 self.would_exits.add(new_virtual_path.resolve())
                 for child in source_path.rglob("*"):
                     new_virtual_path = destination_path / Path(*child.parts[child.parts.index(source_path.name):])
                     self.would_exits.add(new_virtual_path.resolve())
+                    self.would_removed.remove(new_virtual_path.resolve())
         else:
             new_virtual_path = destination_path / source_path.name
-            self.would_exits.add(new_virtual_path.resolve())     
+            self.would_exits.add(new_virtual_path.resolve())
+            self.would_removed.remove(new_virtual_path.resolve())
 
     def validate_move_and_update_state(self, action_data : dict[Any, Any]):
-        pass
+        source_path = Path(action_data.get("source_path")).resolve()  # pyright: ignore[reportArgumentType]
+        destination_path = Path(action_data.get("destination_path")).resolve()  # pyright: ignore[reportArgumentType]
+        try:
+            self.validate_workspace_scope(self.workspace, source_path)  
+            self.validate_workspace_scope(self.workspace, destination_path)  
+        except SystemExit as e:
+            raise InvalidWorkFlowScript(e) 
+
+        from_state_space : bool = False
+
+        # source validation
+        if not FileSafety.does_exists(path=source_path):
+            if not source_path.resolve() in self.would_exits or source_path.resolve() in self.would_removed:
+                raise InvalidWorkFlowScript(f"The given source path to be copied doesn't exist in action {action_data.get("id")}")
+            from_state_space = True
+        if not self.force:
+            target_des = destination_path / source_path.name
+            if FileSafety.does_exists(path=target_des):
+                if not target_des.resolve() in self.would_removed:
+                    raise InvalidWorkFlowScript(f"The given source already exists in destination in action {action_data.get("id")}")
+
+        if not FileSafety.does_exists(path=destination_path) or destination_path.resolve() in self.would_removed:
+            if not destination_path.resolve() in self.would_exits:
+                raise InvalidWorkFlowScript(f"The given destination doesn't exist in action {action_data.get("id")}")
+        
+        if FileSafety.check_if_file(path=destination_path):
+            raise InvalidWorkFlowScript(f"The given destination should be a folder in action {action_data.get("id")}")
+
+        if FileSafety.is_relative_to(path1=source_path, path2=destination_path):
+            raise InvalidWorkFlowScript(f"Moving itself to it's own child is not allowed in action {action_data.get("id")}")
+        
+        if not FileSafety.check_if_file(path=source_path):
+            if from_state_space:
+                for virtual_path in self.would_exits:
+                    if FileSafety.is_relative_to(path1=source_path, path2=virtual_path):
+                        new_virtual_path = destination_path / Path(*virtual_path.parts[virtual_path.parts.index(source_path.name):])
+                        self.would_exits.add(new_virtual_path.resolve())
+                        self.would_removed.add(virtual_path)
+                for paths in self.would_removed:
+                    self.would_exits.remove(paths.resolve())
+            else:
+                self.would_removed.add(source_path.resolve())
+                new_virtual_path = destination_path / source_path.name
+                self.would_exits.add(new_virtual_path.resolve())
+                for child in source_path.rglob("*"):
+                    new_virtual_path = destination_path / Path(*child.parts[child.parts.index(source_path.name):])
+                    self.would_exits.add(new_virtual_path.resolve())
+                    self.would_removed.add(child.resolve())
+        else:
+            new_virtual_path = destination_path / source_path.name
+            self.would_exits.add(new_virtual_path.resolve())
+            self.would_removed.add(source_path.resolve())
+            self.would_exits.remove(source_path.resolve())
+
+    
 
 
 
