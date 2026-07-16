@@ -2,7 +2,7 @@
 from pathlib import Path
 from typing import Any
 
-from workflow.exceptions import InvalidWorkFlowScript, OutOfScope, WorkspaceProtection
+from workflow.exceptions import InvalidFileName, InvalidWorkFlowScript, OutOfScope, WorkspaceProtection
 from workflow.safety import FileSafety
 
 
@@ -17,6 +17,13 @@ class SequenceOperations:
         # internal space
         self.would_exits : set[Path] = set() # Update to tree structure in next version. when implementing full scale dynamic execution
         self.would_removed : set[Path] = set()
+
+        # don't ask why i didn't use tree here. i just wanted to test stuff 
+
+        self.initial_setup()
+        self.validate_sequence_operation()
+
+        # No i was crazy
 
 
     def initial_setup(self):
@@ -84,6 +91,7 @@ class SequenceOperations:
             else:
                 new_virtual_path = destination_path / source_path.name
                 self.would_exits.add(new_virtual_path.resolve())
+                self.would_removed.remove(new_virtual_path.resolve())
                 for child in source_path.rglob("*"):
                     new_virtual_path = destination_path / Path(*child.parts[child.parts.index(source_path.name):])
                     self.would_exits.add(new_virtual_path.resolve())
@@ -130,33 +138,84 @@ class SequenceOperations:
                 for virtual_path in self.would_exits:
                     if FileSafety.is_relative_to(path1=source_path, path2=virtual_path):
                         new_virtual_path = destination_path / Path(*virtual_path.parts[virtual_path.parts.index(source_path.name):])
-                        self.would_exits.add(new_virtual_path.resolve())
-                        self.would_removed.add(virtual_path)
+                        self.would_exits.add(new_virtual_path.resolve()) # if you sit and think this code will make sense (hopefully)
+                        self.would_removed.add(virtual_path.resolve())
+                        self.would_removed.remove(new_virtual_path.resolve())
                 for paths in self.would_removed:
                     self.would_exits.remove(paths.resolve())
             else:
                 self.would_removed.add(source_path.resolve())
                 new_virtual_path = destination_path / source_path.name
                 self.would_exits.add(new_virtual_path.resolve())
+                self.would_removed.remove(new_virtual_path.resolve())
                 for child in source_path.rglob("*"):
                     new_virtual_path = destination_path / Path(*child.parts[child.parts.index(source_path.name):])
                     self.would_exits.add(new_virtual_path.resolve())
+                    self.would_removed.remove(new_virtual_path.resolve())
                     self.would_removed.add(child.resolve())
         else:
             new_virtual_path = destination_path / source_path.name
             self.would_exits.add(new_virtual_path.resolve())
             self.would_removed.add(source_path.resolve())
             self.would_exits.remove(source_path.resolve())
+            self.would_removed.remove(new_virtual_path.resolve())
+
+
+    def _validate_name(self, new_name : str, path : Path) -> Path:
+        if not FileSafety.check_if_valid_name(name=new_name):
+            raise InvalidFileName("Invalid new name: provide a valid file or folder name without a path.")
+        return path.parent / Path(new_name).name
+
+    def validate_rename_and_update_state(self, action_data : dict[Any, Any]):
+        path = Path(action_data.get("path")).resolve()  # pyright: ignore[reportArgumentType]
+        try:
+            self.validate_workspace_scope(self.workspace, path)
+            new_name = self._validate_name(action_data.get("new_name"), path=path)    # pyright: ignore[reportArgumentType]
+        except SystemExit as e:
+            raise InvalidWorkFlowScript(e) 
+
+        if not FileSafety.does_exists(path=path) or path.resolve() in self.would_removed:
+            if not path.resolve() in self.would_exits:
+                raise InvalidWorkFlowScript(f"The give source doesn't exist at action {action_data.get("id")}")
+
+        if not self.force:
+            if FileSafety.check_if_file(path=path) and path.suffix != Path(new_name).suffix:
+                raise InvalidWorkFlowScript("The new filename uses a different extension. Keep the original extension or use --force to allow the change.")
+
+        self.would_exits.add(new_name)
+        self.would_exits.remove(path)
+        self.would_removed.add(path)
+        self.would_removed.remove(new_name)
 
     
+    def validate_delete_and_update_state(self, action_data : dict[Any, Any]):
+        path = Path(action_data.get("path")).resolve()  # pyright: ignore[reportArgumentType]
+        try:
+            self.validate_workspace_scope(self.workspace, path)
+        except SystemExit as e:
+            raise InvalidWorkFlowScript(e) 
 
+        if not FileSafety.does_exists(path=path) or path.resolve() in self.would_removed:
+            if not path.resolve() in self.would_exits:
+                raise InvalidWorkFlowScript(f"The give source doesn't exist at action {action_data.get("id")}")
+
+        self.would_exits.remove(path.resolve())
+        self.would_removed.add(path.resolve())
 
 
     def validate_sequence_operation(self):
         for action_data in self.workflow_data["actions"]:
             match action_data.get("operation"):
                 case "create":
-                    pass
+                    self.validate_create_and_update_state(action_data=action_data)
+                case "copy":
+                    self.validate_copy_and_update_state(action_data=action_data)
+                case "move":
+                    self.validate_move_and_update_state(action_data=action_data)
+                case "rename":
+                    self.validate_rename_and_update_state(action_data=action_data)
+                case "delete":
+                    self.validate_delete_and_update_state(action_data=action_data)
                 case _:
                     raise InvalidWorkFlowScript(f"Invalid operation for action {action_data.get("id")}")
 
