@@ -17,9 +17,24 @@ path = "./src"
 [[actions]]
 operation = "create"
 type = "file"
-path = "./src/__init__.py"
+path = "./src/test/__init__.py"
 recursive = true
 
+[[actions]]
+operation = "create"
+type = "folder"
+path = "./src/test/my"
+recursive = true
 
+[[actions]]
+operation = "create"
+type = "folder"
+path = "./src/to/do"
+recursive = true
+
+[[actions]]
+operation = "copy"
+source_path = "./src/test/__init__.py"
+destination_path = "./src/to"
 
 

@@ -41,12 +41,12 @@ class SequenceOperations:
                 if not path.parent.resolve() in self.would_exits:
                     raise InvalidWorkFlowScript(f"The parent for the operation create in action {action_data.get("id")} doesn't exist, use --recursive")
             self.would_exits.add(path.resolve())
-            self.would_removed.remove(path.resolve())
+            self.would_removed.discard(path.resolve())
         else:
             recursive_path = path
             while not recursive_path.resolve() in self.would_exits:
                 self.would_exits.add(recursive_path.resolve())
-                self.would_removed.remove(recursive_path.resolve())
+                self.would_removed.discard(recursive_path.resolve())
                 recursive_path = recursive_path.parent
 
     def validate_copy_and_update_state(self, action_data : dict[Any, Any]):
@@ -87,19 +87,19 @@ class SequenceOperations:
                     if FileSafety.is_relative_to(path1=source_path, path2=virtual_path):
                         new_virtual_path = destination_path / Path(*virtual_path.parts[virtual_path.parts.index(source_path.name):])
                         self.would_exits.add(new_virtual_path.resolve())
-                        self.would_removed.remove(new_virtual_path.resolve())
+                        self.would_removed.discard(new_virtual_path.resolve())
             else:
                 new_virtual_path = destination_path / source_path.name
                 self.would_exits.add(new_virtual_path.resolve())
-                self.would_removed.remove(new_virtual_path.resolve())
+                self.would_removed.discard(new_virtual_path.resolve())
                 for child in source_path.rglob("*"):
                     new_virtual_path = destination_path / Path(*child.parts[child.parts.index(source_path.name):])
                     self.would_exits.add(new_virtual_path.resolve())
-                    self.would_removed.remove(new_virtual_path.resolve())
+                    self.would_removed.discard(new_virtual_path.resolve())
         else:
             new_virtual_path = destination_path / source_path.name
             self.would_exits.add(new_virtual_path.resolve())
-            self.would_removed.remove(new_virtual_path.resolve())
+            self.would_removed.discard(new_virtual_path.resolve())
 
     def validate_move_and_update_state(self, action_data : dict[Any, Any]):
         source_path = Path(action_data.get("source_path")).resolve()  # pyright: ignore[reportArgumentType]
@@ -140,25 +140,25 @@ class SequenceOperations:
                         new_virtual_path = destination_path / Path(*virtual_path.parts[virtual_path.parts.index(source_path.name):])
                         self.would_exits.add(new_virtual_path.resolve()) # if you sit and think this code will make sense (hopefully)
                         self.would_removed.add(virtual_path.resolve())
-                        self.would_removed.remove(new_virtual_path.resolve())
+                        self.would_removed.discard(new_virtual_path.resolve())
                 for paths in self.would_removed:
                     self.would_exits.remove(paths.resolve())
             else:
                 self.would_removed.add(source_path.resolve())
                 new_virtual_path = destination_path / source_path.name
                 self.would_exits.add(new_virtual_path.resolve())
-                self.would_removed.remove(new_virtual_path.resolve())
+                self.would_removed.discard(new_virtual_path.resolve())
                 for child in source_path.rglob("*"):
                     new_virtual_path = destination_path / Path(*child.parts[child.parts.index(source_path.name):])
                     self.would_exits.add(new_virtual_path.resolve())
-                    self.would_removed.remove(new_virtual_path.resolve())
+                    self.would_removed.discard(new_virtual_path.resolve())
                     self.would_removed.add(child.resolve())
         else:
             new_virtual_path = destination_path / source_path.name
             self.would_exits.add(new_virtual_path.resolve())
             self.would_removed.add(source_path.resolve())
             self.would_exits.remove(source_path.resolve())
-            self.would_removed.remove(new_virtual_path.resolve())
+            self.would_removed.discard(new_virtual_path.resolve())
 
 
     def _validate_name(self, new_name : str, path : Path) -> Path:
@@ -185,7 +185,7 @@ class SequenceOperations:
         self.would_exits.add(new_name)
         self.would_exits.remove(path)
         self.would_removed.add(path)
-        self.would_removed.remove(new_name)
+        self.would_removed.discard(new_name)
 
     
     def validate_delete_and_update_state(self, action_data : dict[Any, Any]):
