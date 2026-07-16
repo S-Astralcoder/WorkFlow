@@ -61,3 +61,7 @@ class WorkspacePathInvalid(SystemExit):
 class WorkflowPathInvalid(SystemExit):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
+
+class InvalidWorkFlowScript(SystemExit):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)

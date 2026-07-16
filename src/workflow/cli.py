@@ -6,6 +6,7 @@ from rich.console import Console
 #Internal
 from workflow.command_line import CommandLine
 from workflow.operations import CreateCommand, CopyCommand, MoveCommand, RenameCommand, DeleteCommand
+from workflow.workflow.construct_workflow import WorkFlowConstructor
 
 
 def permission_func(prompt : str):
@@ -44,6 +45,8 @@ def workflow(args : Optional[List[str]] = None):
             result = command.execute_command(permission_func=permission_func)
             if arg.dry_run or arg.show_status:
                 console.print(result)
+        case "run":
+            console.print(WorkFlowConstructor(args=arg).workflow_data)
         case _:
             console.print("[red] Invalid Operator")
 

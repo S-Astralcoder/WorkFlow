@@ -26,6 +26,8 @@ class CommandLine:
         # delete
         self.add_delete_command_line()
 
+        # workflow
+        self.add_workflow_command_line()
 
     def add_global_tags(self):
         self.arg.add_argument("-a", "--allow", action="store_true", help="skip the confirmation prompt for operations that require approval")
@@ -58,6 +60,10 @@ class CommandLine:
     def add_delete_command_line(self):
         delete_parser = self.operations.add_parser("delete")
         delete_parser.add_argument("path", help="path of the file or folder to delete")
+
+    def add_workflow_command_line(self):
+        workflow_parser = self.operations.add_parser("run")
+        workflow_parser.add_argument("workflow_path", help="Path to workflow script")
 
     def get_parser(self, args : Optional[List[str]] = None):
         return self.arg.parse_args(args=args)
