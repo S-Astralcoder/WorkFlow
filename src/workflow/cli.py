@@ -4,8 +4,8 @@ from rich.prompt import Prompt
 from rich.console import Console
 
 #Internal
-from pathflow.command_line import CommandLine
-from pathflow.operations import CreateCommand, CopyCommand, MoveCommand, RenameCommand, DeleteCommand
+from workflow.command_line import CommandLine
+from workflow.operations import CreateCommand, CopyCommand, MoveCommand, RenameCommand, DeleteCommand
 
 
 def permission_func(prompt : str):
@@ -15,7 +15,7 @@ def permission_func(prompt : str):
     else:
         return False        
 
-def pathflow(args : Optional[List[str]] = None):
+def workflow(args : Optional[List[str]] = None):
     console = Console()
     arg = CommandLine().get_parser(args=args)   
     match arg.operation:

@@ -4,10 +4,10 @@ from pathlib import Path
 import shutil
 
 # Internal
-from pathflow.exceptions import CollisionError, InvalidItemType, SameFileError, SourceNotFoundError
-from pathflow.operations.base import BaseCommand
-from pathflow.operations.response import CommandResult, Status
-from pathflow.safety import FileSafety
+from workflow.exceptions import CollisionError, InvalidItemType, SameFileError, SourceNotFoundError
+from workflow.operations.base import BaseCommand
+from workflow.operations.response import CommandResult, Status
+from workflow.safety import FileSafety
 
 
 class CopyCommand(BaseCommand):

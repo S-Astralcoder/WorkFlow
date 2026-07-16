@@ -4,10 +4,10 @@ import shutil
 
 
 # Internal
-from pathflow.exceptions import InvalidSelfMove
-from pathflow.operations.copy import CopyCommand
-from pathflow.operations.response import CommandResult, Status
-from pathflow.safety import FileSafety
+from workflow.exceptions import InvalidSelfMove
+from workflow.operations.copy import CopyCommand
+from workflow.operations.response import CommandResult, Status
+from workflow.safety import FileSafety
 
 
 

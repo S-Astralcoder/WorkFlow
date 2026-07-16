@@ -1,0 +1,24 @@
+[pathflow]
+name = "initial structure"
+workspace = "workspace\testspace" # after specifying the workspace. the following paths can be written relative the given working directory
+force = false
+dry_run = true
+allow = false
+
+
+# for optional parameter leaving it undefined will result in automatically considering as false
+
+[[actions]] 
+operation = "create"
+type = "folder"
+path = "./src"
+
+[[actions]]
+operation = "create"
+type = "file"
+path = "./src/__init__.py"
+recursive = true
+
+
+
+

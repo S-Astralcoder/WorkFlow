@@ -29,4 +29,6 @@ class FileSafety:
     def check_if_valid_name(name : str) -> bool:
         return is_valid_filename(filename=name, platform="auto")
     
-    
+    @staticmethod
+    def check_if_toml_file(path : Path) -> bool:
+        return path.suffix == ".toml"    

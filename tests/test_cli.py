@@ -3,7 +3,7 @@ from typing import ClassVar
 
 import pytest
 
-from pathflow import cli
+from workflow import cli
 
 
 class StubCommand:
@@ -59,7 +59,7 @@ def stub_parser(
         ("rename", "RenameCommand"),
     ],
 )
-def test_pathflow_dispatches_non_delete_operations(
+def test_workflow_dispatches_non_delete_operations(
     operation: str,
     command_name: str,
     monkeypatch: pytest.MonkeyPatch,
@@ -69,7 +69,7 @@ def test_pathflow_dispatches_non_delete_operations(
     monkeypatch.setattr(cli, command_name, StubCommand)
     raw_args = [operation, "example"]
 
-    cli.pathflow(raw_args)
+    cli.workflow(raw_args)
 
     assert received_args == [raw_args]
     assert len(StubCommand.instances) == 1
@@ -79,14 +79,14 @@ def test_pathflow_dispatches_non_delete_operations(
     assert command.execute_kwargs == {}
 
 
-def test_pathflow_passes_permission_callback_to_delete(
+def test_workflow_passes_permission_callback_to_delete(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     parsed_args = parser_result("delete")
     stub_parser(monkeypatch, parsed_args)
     monkeypatch.setattr(cli, "DeleteCommand", StubCommand)
 
-    cli.pathflow(["delete", "example"])
+    cli.workflow(["delete", "example"])
 
     command = StubCommand.instances[0]
     assert command.args is parsed_args
@@ -103,7 +103,7 @@ def test_pathflow_passes_permission_callback_to_delete(
         (True, True, True),
     ],
 )
-def test_pathflow_displays_results_only_when_requested(
+def test_workflow_displays_results_only_when_requested(
     dry_run: bool,
     show_status: bool,
     should_display: bool,
@@ -116,7 +116,7 @@ def test_pathflow_displays_results_only_when_requested(
     )
     monkeypatch.setattr(cli, "CreateCommand", StubCommand)
 
-    cli.pathflow([])
+    cli.workflow([])
 
     assert (StubCommand.result in capsys.readouterr().out) is should_display
 
@@ -149,22 +149,22 @@ def test_permission_func_converts_prompt_response_to_boolean(
     ]
 
 
-def test_pathflow_reports_an_invalid_operation_from_parser(
+def test_workflow_reports_an_invalid_operation_from_parser(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     stub_parser(monkeypatch, parser_result("unexpected"))
 
-    cli.pathflow([])
+    cli.workflow([])
 
     assert "Invalid Operator" in capsys.readouterr().out
 
 
-def test_pathflow_accepts_no_explicit_argument_list(
+def test_workflow_accepts_no_explicit_argument_list(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     received_args = stub_parser(monkeypatch, parser_result("unexpected"))
 
-    cli.pathflow()
+    cli.workflow()
 
     assert received_args == [None]

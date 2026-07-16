@@ -1,5 +1,5 @@
 [project]
-name = "pathflow"
+name = "workflow"
 version = "0.1.0"
 description = "A python package acts as an automated workspace manager that reads a TOML script to execute a sequence of file and folder operations."
 readme = "README.md"
@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [project.scripts]
-pathflow = "pathflow:main"
+workflow = "workflow:main"
 
 [build-system]
 requires = ["uv_build>=0.11.6,<0.12.0"]

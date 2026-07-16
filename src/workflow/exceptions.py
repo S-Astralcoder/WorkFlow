@@ -57,3 +57,7 @@ class InvalidFileType(SystemExit):
 class WorkspacePathInvalid(SystemExit):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
+
+class WorkflowPathInvalid(SystemExit):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)

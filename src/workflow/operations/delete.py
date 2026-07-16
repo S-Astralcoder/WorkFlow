@@ -7,10 +7,10 @@ from typing import Callable
 import send2trash 
 
 # Internal
-from pathflow.exceptions import ItemNotFound
-from pathflow.operations.base import BaseCommand
-from pathflow.operations.response import CommandResult, Status
-from pathflow.safety import FileSafety
+from workflow.exceptions import ItemNotFound
+from workflow.operations.base import BaseCommand
+from workflow.operations.response import CommandResult, Status
+from workflow.safety import FileSafety
 
 
 class DeleteCommand(BaseCommand):

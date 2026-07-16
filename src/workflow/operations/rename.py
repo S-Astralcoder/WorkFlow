@@ -3,10 +3,10 @@ import argparse
 from pathlib import Path
 
 # Internal
-from pathflow.exceptions import InvalidFileName, InvalidFileType, SourceNotFoundError
-from pathflow.operations.base import BaseCommand
-from pathflow.operations.response import CommandResult, Status
-from pathflow.safety import FileSafety
+from workflow.exceptions import InvalidFileName, InvalidFileType, SourceNotFoundError
+from workflow.operations.base import BaseCommand
+from workflow.operations.response import CommandResult, Status
+from workflow.safety import FileSafety
 
 
 class RenameCommand(BaseCommand):

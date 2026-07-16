@@ -2,8 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from pathflow.command_line import CommandLine
-from pathflow.exceptions import (
+from workflow.command_line import CommandLine
+from workflow.exceptions import (
     CollisionError,
     FileAlreadyExists,
     InvalidFileName,
@@ -15,14 +15,14 @@ from pathflow.exceptions import (
     WorkspacePathInvalid,
     WorkspaceProtection,
 )
-from pathflow.operations import (
+from workflow.operations import (
     CopyCommand,
     CreateCommand,
     DeleteCommand,
     MoveCommand,
     RenameCommand,
 )
-from pathflow.operations.response import Status
+from workflow.operations.response import Status
 
 
 def parse_args(workspace: Path, *operation_args: str, flags: tuple[str, ...] = ()):
@@ -183,7 +183,7 @@ def test_copy_reports_unexpected_execution_error(
     def fail_copy(*_args: object, **_kwargs: object) -> None:
         raise OSError("copy blocked")
 
-    monkeypatch.setattr("pathflow.operations.copy.shutil.copy2", fail_copy)
+    monkeypatch.setattr("workflow.operations.copy.shutil.copy2", fail_copy)
     result = command.execute_command()
 
     assert result.status is Status.FAILED
@@ -239,7 +239,7 @@ def test_move_reports_unexpected_execution_error(
     def fail_move(*_args: object, **_kwargs: object) -> None:
         raise PermissionError("move blocked")
 
-    monkeypatch.setattr("pathflow.operations.move.shutil.move", fail_move)
+    monkeypatch.setattr("workflow.operations.move.shutil.move", fail_move)
     result = command.execute_command()
 
     assert result.status is Status.FAILED
@@ -359,7 +359,7 @@ def test_delete_allow_flag_bypasses_permission_callback(
     def record_remove(path: Path) -> None:
         removed.append(path)
 
-    monkeypatch.setattr("pathflow.operations.delete.os.remove", record_remove)
+    monkeypatch.setattr("workflow.operations.delete.os.remove", record_remove)
     result = command.execute_command(unexpected_prompt)
 
     assert result.status is Status.SUCCESSFUL
@@ -396,7 +396,7 @@ def test_non_force_delete_uses_recycle_bin(
         trashed.append(path)
 
     monkeypatch.setattr(
-        "pathflow.operations.delete.send2trash.send2trash",
+        "workflow.operations.delete.send2trash.send2trash",
         record_trashed,
     )
 
@@ -426,7 +426,7 @@ def test_delete_reports_filesystem_errors(
     def fail_remove(_path: Path) -> None:
         raise exception_type("delete blocked")
 
-    monkeypatch.setattr("pathflow.operations.delete.os.remove", fail_remove)
+    monkeypatch.setattr("workflow.operations.delete.os.remove", fail_remove)
     result = command.execute_command(_unused_permission)
 
     assert result.status is Status.FAILED

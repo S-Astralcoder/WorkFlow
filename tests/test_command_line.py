@@ -1,6 +1,6 @@
 import pytest
 
-from pathflow.command_line import CommandLine
+from workflow.command_line import CommandLine
 
 
 @pytest.fixture
