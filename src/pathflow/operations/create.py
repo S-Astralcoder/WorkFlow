@@ -19,7 +19,7 @@ class CreateCommand(BaseCommand):
         self.is_file : bool = args.type == "file"
 
         # path
-        self.path : Path = self._validate_path(args.path)
+        self.path : Path = self._resolve_path(args.path)
 
         self.validate_workspace_scope(workspace=self.workspace, path=self.path) 
 

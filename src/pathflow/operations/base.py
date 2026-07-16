@@ -18,12 +18,16 @@ class BaseCommand:
 
         self.is_file : bool
 
-    def _validate_path(self, path : str):
-        """validates if the path is correct"""
+    def _resolve_path(self, path: str) -> Path:
+        """Validate the path string and return its absolute representation."""
         if not FileSafety.valid_path_string(path=path):
             raise InvalidFilePath("Invalid path: enter a valid file or folder path.")
-        
-        workspace_path = Path(path).resolve()
+
+        return Path(path).resolve()
+
+    def _validate_path(self, path : str):
+        """Validate that a path is valid and already exists."""
+        workspace_path = self._resolve_path(path)
         if not FileSafety.does_exists(path=workspace_path):
             raise WorkspacePathInvalid("Invalid Path : Workspace doesn't exist; Enter a valid workspace path")
         return workspace_path
