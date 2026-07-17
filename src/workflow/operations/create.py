@@ -47,7 +47,7 @@ class CreateCommand(BaseCommand):
         try:
             if self.is_file:
                 if self.recursive:
-                    self.path.parent.mkdir(parents=self.recursive, exist_ok=self.force)
+                    self.path.parent.mkdir(parents=self.recursive, exist_ok=True)
                 self.path.touch(exist_ok=self.force)
             else:
                 self.path.mkdir(parents=self.recursive, exist_ok=self.force)

@@ -5,15 +5,9 @@ from typing import Literal
 
 
 
-from rich.console import Console
 from rich.tree import Tree
 
-from workflow.exceptions import VirtualParentAbsent, VirtualPathNotExists, VirtualRenameAlreadyExists
-
-
-
-
-
+from workflow.exceptions import VirtualCollisionError, VirtualDestinationNotExists, VirtualInvalidItemType, VirtualOperationOnSelf, VirtualParentAbsent, VirtualPathNotExists, VirtualRenameAlreadyExists, VirtualSourceNotExists
 
 def to_rich_tree(node: Node) -> Tree:
     icon = "📁" if node.type == "folder" else "📄"
@@ -43,6 +37,8 @@ class VirtualTree:
             tmp_node = current_node.child.get(node_name)
             if tmp_node is None:
                 if relative_path[-1] == node_name or recursive:
+                    if current_node.type == "file":
+                        raise VirtualInvalidItemType("Can't create a item inside a file")
                     current_node.child.setdefault(node_name, Node(name=node_name, type="folder", parent=current_node))
                     tmp_node = current_node.child.get(node_name)
                     if tmp_node is not None:
@@ -72,11 +68,76 @@ class VirtualTree:
 
 
     def copy_path(self, relative_source_path : list[str], relative_destination_path : list[str]):
-        pass
+        self.validate_pointing_inside(relative_source_path, relative_destination_path)
+        
+        source_node = self.root_node
+        tmp_source_node : Node | None
+        for source_node_name in relative_source_path:
+            tmp_source_node = source_node.child.get(source_node_name)
+            if tmp_source_node is None:
+                raise VirtualSourceNotExists("The give source path doesn't exists")
+            source_node = tmp_source_node
 
+        destination_node = self.root_node
+        tmp_destination_node : Node | None
+        for destination_node_name in relative_destination_path:
+            tmp_destination_node = destination_node.child.get(destination_node_name)
+            if tmp_destination_node is None:
+                raise VirtualDestinationNotExists("The give destination path doesn't exists")
+            destination_node = tmp_destination_node
 
+        if source_node.name in destination_node.child:
+            raise VirtualCollisionError("The destination contains same item name as source")
+
+        if destination_node.type == "file":
+            raise VirtualInvalidItemType("Can't copy to a file")
+
+        source_copy = self.node_copy(source_node, destination_node)
+        destination_node.child.setdefault(source_copy.name, source_copy)
+
+    def node_copy(self, node : Node, parent : Node):
+        new_node = Node(name=node.name, type=node.type, parent=parent)
+
+        for child in node.child.values():
+            clone_child = self.node_copy(child, new_node)
+            new_node.child.setdefault(clone_child.name, clone_child)
+
+        return new_node
+        
     def move_path(self, relative_source_path : list[str], relative_destination_path : list[str]):
-        pass
+        self.validate_pointing_inside(relative_source_path, relative_destination_path)
+        source_node = self.root_node
+        tmp_source_node : Node | None
+        for source_node_name in relative_source_path:
+            tmp_source_node = source_node.child.get(source_node_name)
+            if tmp_source_node is None:
+                raise VirtualSourceNotExists("The give source path doesn't exists")
+            source_node = tmp_source_node
+
+        destination_node = self.root_node
+        tmp_destination_node : Node | None
+        for destination_node_name in relative_destination_path:
+            tmp_destination_node = destination_node.child.get(destination_node_name)
+            if tmp_destination_node is None:
+                raise VirtualDestinationNotExists("The give destination path doesn't exists")
+            destination_node = tmp_destination_node
+
+        if source_node.name in destination_node.child:
+            raise VirtualCollisionError("The destination contains same item name as source")
+
+        if destination_node.type == "file":
+            raise VirtualInvalidItemType("Can't move to a file")
+        
+        source_parent = source_node.parent
+        if source_parent is not None:
+            source_parent.child.pop(source_node.name)
+            source_node.parent = destination_node
+            destination_node.child.setdefault(source_node.name, source_node)
+
+
+    def validate_pointing_inside(self, relative_source_path : list[str], relative_destination_path : list[str]):
+        if len(relative_destination_path) >= len(relative_source_path)  and  relative_destination_path[:len(relative_source_path)] == relative_source_path:
+            raise VirtualOperationOnSelf("Operation on itself is invalid") 
 
     def rename_path_node(self, relative_path : list[str], new_name : str) -> bool:
         current_node = self.root_node
@@ -93,29 +154,22 @@ class VirtualTree:
             if new_name in parent.child:
                 raise VirtualRenameAlreadyExists("The given new name already exists in that same directory")
             else:
-                parent.child.setdefault(new_name, Node(name=new_name, type=current_node.type, child=current_node.child, parent=current_node.parent))
                 parent.child.pop(current_node.name)
+                current_node.name = new_name
+                parent.child.setdefault(new_name, current_node)
                 return True
         return False
         
-    
 
-virtual_tree = VirtualTree("base")
+    def path_exists_and_type(self, relative_path : list[str], type : Literal["file", "folder"]):
+        current_node = self.root_node
+        tmp_node : Node | None
+        for node_name in relative_path:
+            tmp_node = current_node.child.get(node_name)
+            if tmp_node is None:
+                return False
+            current_node = tmp_node
+        return current_node.type == type    
 
-virtual_tree.add_path(["test", "my", "to.txt"], "file", recursive=True)
-virtual_tree.add_path(["test", "my", "do.txt"], "file")
-virtual_tree.add_path(["test", "my", "what.txt"], "file")
-
-virtual_tree.add_path(["test", "self", "to.txt"], "file", recursive=True)
-virtual_tree.add_path(["self", "my", "do.txt"], "file", recursive=True)
-virtual_tree.add_path(["test", "self", "what.txt"], "file")
-virtual_tree.add_path(["test", "self", "what", "todo", "oh", "text.txt"], "file", recursive=True)
-
-print(virtual_tree.remove_path(["test", "my", "to.txt"]))
-print(virtual_tree.rename_path_node(relative_path=["test", "self", "what.txt"], new_name="td.txt"))
-print(virtual_tree.rename_path_node(relative_path=["test", "self", "td.txt"], new_name="no.txt"))
-
-Console().print(to_rich_tree(virtual_tree.root_node))
-        
         
     

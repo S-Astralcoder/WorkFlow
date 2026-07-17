@@ -99,3 +99,18 @@ class VirtualRenameAlreadyExists(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
 
+class VirtualSourceNotExists(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
+class VirtualDestinationNotExists(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
+class VirtualCollisionError(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
+class VirtualOperationOnSelf(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
