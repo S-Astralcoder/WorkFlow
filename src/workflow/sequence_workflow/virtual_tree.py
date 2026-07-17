@@ -8,7 +8,8 @@ from typing import Literal
 from rich.console import Console
 from rich.tree import Tree
 
-from workflow.exceptions import VirtualParentAbsent
+from workflow.exceptions import VirtualParentAbsent, VirtualPathNotExists, VirtualRenameAlreadyExists
+
 
 
 
@@ -59,7 +60,7 @@ class VirtualTree:
         for node_name in relative_path:
             tmp_node = current_node.child.get(node_name)
             if tmp_node is None:
-                raise VirtualParentAbsent("The given path to remove doesn't exist in this virtual space")
+                raise VirtualPathNotExists("The given path to remove doesn't exist in this virtual space")
             current_node = tmp_node
 
         parent = current_node.parent
@@ -77,15 +78,25 @@ class VirtualTree:
     def move_path(self, relative_source_path : list[str], relative_destination_path : list[str]):
         pass
 
-    def rename_path_node(self, relative_path : list[str], new_name : str):
+    def rename_path_node(self, relative_path : list[str], new_name : str) -> bool:
         current_node = self.root_node
         tmp_node : Node | None
         for node_name in relative_path:
             tmp_node = current_node.child.get(node_name)
             if tmp_node is None:
-                raise VirtualParentAbsent("The given path doesn't exist in this virtual space")
+                raise VirtualPathNotExists("The given path doesn't exist in this virtual space")
             current_node = tmp_node
-        current_node.name = new_name
+
+        parent = current_node.parent
+
+        if parent is not None:
+            if new_name in parent.child:
+                raise VirtualRenameAlreadyExists("The given new name already exists in that same directory")
+            else:
+                parent.child.setdefault(new_name, Node(name=new_name, type=current_node.type, child=current_node.child, parent=current_node.parent))
+                parent.child.pop(current_node.name)
+                return True
+        return False
         
     
 
@@ -96,11 +107,13 @@ virtual_tree.add_path(["test", "my", "do.txt"], "file")
 virtual_tree.add_path(["test", "my", "what.txt"], "file")
 
 virtual_tree.add_path(["test", "self", "to.txt"], "file", recursive=True)
-virtual_tree.add_path(["self", "my", "do.txt"], "file")
+virtual_tree.add_path(["self", "my", "do.txt"], "file", recursive=True)
 virtual_tree.add_path(["test", "self", "what.txt"], "file")
-virtual_tree.add_path(["test", "self", "what", "todo", "oh", "text.txt"], "file")
+virtual_tree.add_path(["test", "self", "what", "todo", "oh", "text.txt"], "file", recursive=True)
 
-print(virtual_tree.remove_path(["test", "my", "to.txtq"]))
+print(virtual_tree.remove_path(["test", "my", "to.txt"]))
+print(virtual_tree.rename_path_node(relative_path=["test", "self", "what.txt"], new_name="td.txt"))
+print(virtual_tree.rename_path_node(relative_path=["test", "self", "td.txt"], new_name="no.txt"))
 
 Console().print(to_rich_tree(virtual_tree.root_node))
         

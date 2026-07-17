@@ -3,12 +3,17 @@ from typing import ClassVar
 
 import pytest
 
+import workflow as workflow_package
 from workflow import cli
+from workflow.operations.response import CommandResult, Status
 
 
 class StubCommand:
     instances: ClassVar[list["StubCommand"]] = []
-    result: ClassVar[str] = "command result"
+    result: ClassVar[CommandResult] = CommandResult(
+        status=Status.SUCCESSFUL,
+        message="command result",
+    )
 
     def __init__(self, args: Namespace) -> None:
         self.args = args
@@ -16,7 +21,7 @@ class StubCommand:
         self.execute_kwargs: dict[str, object] = {}
         self.instances.append(self)
 
-    def execute_command(self, *args: object, **kwargs: object) -> str:
+    def execute_command(self, *args: object, **kwargs: object) -> CommandResult:
         self.execute_args = args
         self.execute_kwargs = kwargs
         return self.result
@@ -69,8 +74,9 @@ def test_workflow_dispatches_non_delete_operations(
     monkeypatch.setattr(cli, command_name, StubCommand)
     raw_args = [operation, "example"]
 
-    cli.workflow(raw_args)
+    exit_code = cli.workflow(raw_args)
 
+    assert exit_code == 0
     assert received_args == [raw_args]
     assert len(StubCommand.instances) == 1
     command = StubCommand.instances[0]
@@ -118,7 +124,45 @@ def test_workflow_displays_results_only_when_requested(
 
     cli.workflow([])
 
-    assert (StubCommand.result in capsys.readouterr().out) is should_display
+    assert (StubCommand.result.message in capsys.readouterr().out) is should_display
+
+
+def test_workflow_always_displays_failed_result(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    stub_parser(monkeypatch, parser_result("create"))
+    monkeypatch.setattr(cli, "CreateCommand", StubCommand)
+    monkeypatch.setattr(
+        StubCommand,
+        "result",
+        CommandResult(
+            status=Status.FAILED,
+            message="Failed to create item.",
+            error="creation blocked",
+        ),
+    )
+
+    exit_code = cli.workflow([])
+
+    output = capsys.readouterr().out
+    assert exit_code == 1
+    assert "Failed to create item." in output
+    assert "creation blocked" in output
+
+
+def test_main_exits_with_workflow_result(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def failed_workflow() -> int:
+        return 1
+
+    monkeypatch.setattr(workflow_package, "workflow", failed_workflow)
+
+    with pytest.raises(SystemExit) as error:
+        workflow_package.main()
+
+    assert error.value.code == 1
 
 
 @pytest.mark.parametrize(
@@ -155,8 +199,9 @@ def test_workflow_reports_an_invalid_operation_from_parser(
 ) -> None:
     stub_parser(monkeypatch, parser_result("unexpected"))
 
-    cli.workflow([])
+    exit_code = cli.workflow([])
 
+    assert exit_code == 1
     assert "Invalid Operator" in capsys.readouterr().out
 
 

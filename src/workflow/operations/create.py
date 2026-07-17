@@ -52,7 +52,6 @@ class CreateCommand(BaseCommand):
             else:
                 self.path.mkdir(parents=self.recursive, exist_ok=self.force)
         except (OSError, PermissionError) as e:
-            print(e)
             return CommandResult(status=Status.FAILED, message=f"Failed to create '{self.path}'.", error=str(e))
         return CommandResult(status=Status.SUCCESSFUL, message="Executed Successfully")
 

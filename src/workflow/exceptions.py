@@ -66,7 +66,9 @@ class InvalidWorkFlowScript(SystemExit):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
 
-
+class LimitationError(SystemExit):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
 
 
 class VirtualParentAbsent(Exception):
@@ -76,3 +78,8 @@ class VirtualParentAbsent(Exception):
 class VirtualPathNotExists(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
+
+class VirtualRenameAlreadyExists(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+

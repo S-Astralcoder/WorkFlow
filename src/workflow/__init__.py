@@ -1,4 +1,4 @@
 from .cli import workflow
 
 def main() -> None:
-    workflow()
+    raise SystemExit(workflow())

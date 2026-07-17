@@ -10,6 +10,7 @@ from workflow.exceptions import (
     InvalidFileType,
     InvalidItemType,
     InvalidSelfMove,
+    LimitationError,
     OutOfScope,
     SameFileError,
     WorkspacePathInvalid,
@@ -37,6 +38,42 @@ def test_non_existing_workspace(tmp_path: Path) -> None:
 
     with pytest.raises(WorkspacePathInvalid):
         CreateCommand(parse_args(invalid_workspace, "create", "file", str(target)))
+
+
+def test_operation_rejects_symbolic_link_path(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    target = tmp_path / "target.txt"
+    target.touch()
+
+    def is_target_link(path: object) -> bool:
+        return Path(str(path)) == target
+
+    monkeypatch.setattr(
+        "workflow.operations.base.os.path.islink",
+        is_target_link,
+    )
+
+    with pytest.raises(LimitationError):
+        DeleteCommand(parse_args(tmp_path, "delete", str(target)))
+
+
+def test_operation_rejects_path_below_symbolic_link(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    linked_parent = tmp_path / "linked"
+    target = linked_parent / "target.txt"
+
+    def is_linked_parent(path: object) -> bool:
+        return Path(str(path)) == linked_parent
+
+    monkeypatch.setattr(
+        "workflow.operations.base.os.path.islink",
+        is_linked_parent,
+    )
+
+    with pytest.raises(LimitationError):
+        CreateCommand(parse_args(tmp_path, "create", "file", str(target)))
 
 
 def test_out_of_scope(tmp_path: Path) -> None:
@@ -90,6 +127,31 @@ def test_create_dry_run_leaves_existing_target_unchanged(tmp_path: Path) -> None
 
     assert result.status is Status.DRY_RUN
     assert target.read_text(encoding="utf-8") == "original"
+
+
+def test_create_returns_failure_without_printing_raw_error(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    target = tmp_path / "target.txt"
+    command = CreateCommand(parse_args(tmp_path, "create", "file", str(target)))
+
+    def fail_touch(
+        _self: Path, *_args: object, **_kwargs: object
+    ) -> None:
+        raise PermissionError("creation blocked")
+
+    monkeypatch.setattr(Path, "touch", fail_touch)
+
+    result = command.execute_command()
+
+    captured = capsys.readouterr()
+    assert result.status is Status.FAILED
+    assert result.message == f"Failed to create '{target}'."
+    assert result.error == "creation blocked"
+    assert captured.out == ""
+    assert captured.err == ""
 
 
 def test_copy_rejects_file_as_destination(tmp_path: Path) -> None:
