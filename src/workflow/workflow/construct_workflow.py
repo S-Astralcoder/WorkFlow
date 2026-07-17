@@ -22,20 +22,20 @@ class WorkFlowConstructor:
 
     def _validate_workflow(self, path : str) -> Path:
         if not FileSafety.valid_path_string(path=path):
-            raise InvalidFilePath("The Given path is invalid; enter a valid workflow path")
+            raise InvalidFilePath(f"Invalid workflow path '{path}': the value is not a valid filesystem path.")
         workflow_path = Path(path)
         if not FileSafety.does_exists(path=workflow_path):
-            raise WorkflowPathInvalid("The Given workflow path doesn't exists")
+            raise WorkflowPathInvalid(f"Workflow script '{workflow_path.resolve()}' does not exist.")
         if not (FileSafety.check_if_file(path=workflow_path) and FileSafety.check_if_toml_file(path=workflow_path)):
-            raise InvalidFileType("The workflow path should be .toml file") 
+            raise InvalidFileType(f"Workflow script '{workflow_path.resolve()}' must be an existing .toml file.")
         return workflow_path
 
     def _validate_path(self, path : str) -> str:
         if not FileSafety.valid_path_string(path=path):
-            raise InvalidFilePath("The Given path is invalid; enter a valid workspace path")
+            raise InvalidFilePath(f"Invalid workspace path '{path}': the value is not a valid filesystem path.")
         workflow_path = Path(path)
         if not FileSafety.does_exists(path=workflow_path):
-            raise WorkflowPathInvalid("The Given workspace path doesn't exists")
+            raise WorkflowPathInvalid(f"Workflow workspace '{workflow_path.resolve()}' does not exist.")
         return str(workflow_path.resolve())
 
     def _fetch_workflow_data(self) -> dict[Any, Any]:
@@ -64,7 +64,7 @@ class WorkFlowConstructor:
         type = create_action.get("type")
         path = create_action.get("path")
         if None in (type, path):
-            raise InvalidWorkFlowScript(f"Invalid format for action {action_id} in the script")
+            raise InvalidWorkFlowScript(f"Action {action_id} ('create') is invalid: required fields are 'type' and 'path'; received type={type!r}, path={path!r}.")
         
         self.workflow_data["actions"].append({"id" : action_id ,"operation" : "create", "type" : type, "path" : Path(path).resolve(), "recursive" : create_action.get("recursive", False)})  # pyright: ignore[reportArgumentType]
 
@@ -72,27 +72,27 @@ class WorkFlowConstructor:
         source_path = copy_action.get("source_path")
         destination_path = copy_action.get("destination_path")
         if None in (source_path, destination_path):
-            raise InvalidWorkFlowScript(f"Invalid format for action {action_id} in the script")
+            raise InvalidWorkFlowScript(f"Action {action_id} ('copy') is invalid: required fields are 'source_path' and 'destination_path'; received source_path={source_path!r}, destination_path={destination_path!r}.")
         self.workflow_data["actions"].append({"id" : action_id, "operation" : "copy", "source_path" : Path(source_path).resolve(), "destination_path" : Path(destination_path).resolve()})  # pyright: ignore[reportArgumentType]
 
     def construct_move(self, move_action : dict[Any, Any], action_id : int) -> None:
         source_path = move_action.get("source_path")
         destination_path = move_action.get("destination_path")
         if None in (source_path, destination_path):
-            raise InvalidWorkFlowScript(f"Invalid format for action {action_id} in the script")
+            raise InvalidWorkFlowScript(f"Action {action_id} ('move') is invalid: required fields are 'source_path' and 'destination_path'; received source_path={source_path!r}, destination_path={destination_path!r}.")
         self.workflow_data["actions"].append({"id" : action_id, "operation" : "move", "source_path" : Path(source_path).resolve(), "destination_path" : Path(destination_path).resolve()})  # pyright: ignore[reportArgumentType]
 
     def construct_rename(self, rename_action : dict[Any, Any], action_id : int) -> None:
         path = rename_action.get("path")
         new_name = rename_action.get("new_name")
         if None in (path, new_name):
-            raise InvalidWorkFlowScript(f"Invalid format for action {action_id} in the script")
+            raise InvalidWorkFlowScript(f"Action {action_id} ('rename') is invalid: required fields are 'path' and 'new_name'; received path={path!r}, new_name={new_name!r}.")
         self.workflow_data["actions"].append({"id" : action_id, "operation" : "rename", "path" : Path(path).resolve(), "new_name" : new_name})  # pyright: ignore[reportArgumentType]
 
     def construct_delete(self, delete_action : dict[Any, Any], action_id : int) -> None:
         path = delete_action.get("path")
         if path is None:
-            raise InvalidWorkFlowScript(f"Invalid format for action {action_id} in the script")
+            raise InvalidWorkFlowScript(f"Action {action_id} ('delete') is invalid: required field 'path' is missing.")
         self.workflow_data["actions"].append({"id" : action_id, "operation" : "delete", "path" : Path(path).resolve()})
 
     def _format_raw_data(self) -> None:
@@ -118,7 +118,7 @@ class WorkFlowConstructor:
                 case "delete":
                     self.construct_delete(delete_action=action_data, action_id=id)
                 case _:
-                    raise InvalidWorkFlowScript(f"The give operation {operation} is invalid at action {id}")
+                    raise InvalidWorkFlowScript(f"Action {id} has unsupported operation {operation!r}. Supported operations: create, copy, move, rename, delete.")
                 
     def get_workspace_sequence_data(self):
         return self.workflow_data

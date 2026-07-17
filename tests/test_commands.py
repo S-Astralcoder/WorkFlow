@@ -265,6 +265,71 @@ def test_rename_rejects_extension_change_without_force(tmp_path: Path) -> None:
         RenameCommand(parse_args(tmp_path, "rename", str(source), "source.md"))
 
 
+def test_rename_rejects_existing_target_without_force(tmp_path: Path) -> None:
+    source = tmp_path / "source.txt"
+    target = tmp_path / "target.txt"
+    source.touch()
+    target.touch()
+
+    with pytest.raises(CollisionError) as error:
+        RenameCommand(parse_args(tmp_path, "rename", str(source), target.name))
+
+    assert str(source) in str(error.value)
+    assert str(target) in str(error.value)
+
+
+def test_force_rename_uses_next_available_numbered_file_name(tmp_path: Path) -> None:
+    source = tmp_path / "source.txt"
+    target = tmp_path / "target.txt"
+    numbered_target = tmp_path / "target2.txt"
+    expected_target = tmp_path / "target3.txt"
+    source.write_text("source", encoding="utf-8")
+    target.write_text("target", encoding="utf-8")
+    numbered_target.write_text("target2", encoding="utf-8")
+    command = RenameCommand(
+        parse_args(
+            tmp_path,
+            "rename",
+            str(source),
+            target.name,
+            flags=("--force",),
+        )
+    )
+
+    result = command.execute_command()
+
+    assert result.status is Status.SUCCESSFUL
+    assert command.new_name == expected_target
+    assert expected_target.read_text(encoding="utf-8") == "source"
+    assert target.read_text(encoding="utf-8") == "target"
+    assert numbered_target.read_text(encoding="utf-8") == "target2"
+
+
+def test_force_rename_uses_numbered_folder_name(tmp_path: Path) -> None:
+    source = tmp_path / "source"
+    target = tmp_path / "target"
+    expected_target = tmp_path / "target2"
+    source.mkdir()
+    (source / "content.txt").touch()
+    target.mkdir()
+    command = RenameCommand(
+        parse_args(
+            tmp_path,
+            "rename",
+            str(source),
+            target.name,
+            flags=("--force",),
+        )
+    )
+
+    result = command.execute_command()
+
+    assert result.status is Status.SUCCESSFUL
+    assert command.new_name == expected_target
+    assert (expected_target / "content.txt").exists()
+    assert target.is_dir()
+
+
 def test_force_rename_allows_extension_change(tmp_path: Path) -> None:
     source = tmp_path / "source.txt"
     source.write_text("content", encoding="utf-8")

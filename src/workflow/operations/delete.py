@@ -27,7 +27,7 @@ class DeleteCommand(BaseCommand):
     def _validate_target_path(self, path : str) -> Path:
         source_path = self._validate_path(path=path)
         if not FileSafety.does_exists(path=source_path):
-            raise ItemNotFound("Delete target does not exist. Enter the path of an existing file or folder.")
+            raise ItemNotFound(f"Cannot delete '{source_path}': the target does not exist.")
         return source_path
 
     def execute_command(self, permission_func : Callable[[str],bool]) -> CommandResult:
@@ -46,7 +46,7 @@ class DeleteCommand(BaseCommand):
                     send2trash.send2trash(self.path)
                     return CommandResult(status=Status.SUCCESSFUL, message="Moved to bin")
         except (OSError, PermissionError) as e:
-            return CommandResult(status=Status.FAILED, message="Unexpected Error Occurred During Execution", error=str(e))
+            return CommandResult(status=Status.FAILED, message=f"Failed to delete '{self.path}'.", error=str(e))
         return CommandResult(status=Status.SKIPPED, message="Execution Skipped")
         
     

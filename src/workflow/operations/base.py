@@ -21,7 +21,7 @@ class BaseCommand:
     def _resolve_path(self, path: str) -> Path:
         """Validate the path string and return its absolute representation."""
         if not FileSafety.valid_path_string(path=path):
-            raise InvalidFilePath("Invalid path: enter a valid file or folder path.")
+            raise InvalidFilePath(f"Invalid path '{path}': the value is not a valid file or folder path.")
 
         return Path(path).resolve()
 
@@ -29,14 +29,14 @@ class BaseCommand:
         """Validate that a path is valid and already exists."""
         workspace_path = self._resolve_path(path)
         if not FileSafety.does_exists(path=workspace_path):
-            raise WorkspacePathInvalid("Invalid Path : Workspace doesn't exist; Enter a valid workspace path")
+            raise WorkspacePathInvalid(f"Workspace '{workspace_path}' does not exist. Choose an existing folder with --workspace.")
         return workspace_path
 
     def validate_workspace_scope(self, workspace : Path, path : Path, inside : bool = True):
         """checks if the action path is outside the workspace. to prevent operations outside of workspace"""
         if not FileSafety.is_relative_to(path1=workspace, path2=path):
-            raise OutOfScope("Path is outside the configured workspace. Choose a path inside the workspace or change --workspace.")
+            raise OutOfScope(f"Path '{path}' is outside workspace '{workspace}'. Choose a path inside that workspace or change --workspace.")
         if inside:
             if FileSafety.same_path(path1=workspace, path2=path):
-                raise WorkspaceProtection("This operation cannot target the workspace root itself. Choose an item inside the workspace.")
+                raise WorkspaceProtection(f"Path '{path}' is the workspace root. This operation must target an item inside '{workspace}'.")
         

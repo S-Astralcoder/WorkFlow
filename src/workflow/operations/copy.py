@@ -32,27 +32,28 @@ class CopyCommand(BaseCommand):
         """Same validation but added check for if path exists"""
         source_path = self._validate_path(path=path)
         if not FileSafety.does_exists(path=source_path):
-            raise SourceNotFoundError("Source path does not exist. Enter the path of an existing file or folder.")
+            raise SourceNotFoundError(f"Source '{source_path}' does not exist. Choose an existing file or folder.")
         return source_path
 
     def _validate_destination_path(self, path : str) -> Path:
         """Same as above but also checks if the destination is a folder"""
         destination_path = self._validate_path(path=path)
         if not FileSafety.does_exists(path=destination_path):
-            raise SourceNotFoundError("Destination path does not exist. Enter the path of an existing folder.")
+            raise SourceNotFoundError(f"Destination '{destination_path}' does not exist. Choose an existing folder.")
         if FileSafety.check_if_file(path=destination_path):
-            raise InvalidItemType("Destination must be a folder; a file path cannot be used as the copy destination.")
+            raise InvalidItemType(f"Destination '{destination_path}' is a file. Copy and move destinations must be folders.")
         return destination_path
 
     def _safe_check(self):
         """Again optional safety check. to prevent overwrites"""
         if any([self.source_path.name == item.name for item in self.destination_path.iterdir()]):
-            raise CollisionError(f"An item named '{self.source_path.name}' already exists in '{self.destination_path}'. Use --force to overwrite it.")
+            target = self.destination_path / self.source_path.name
+            raise CollisionError(f"Cannot copy or move '{self.source_path}' to '{self.destination_path}': target '{target}' already exists. Use --force to overwrite it.")
 
     def _mandatory_check(self):
         """Check that is very import to prevent cascaded copy loop (i made that term up)"""
         if FileSafety.same_path(path1=self.source_path, path2=self.destination_path):
-            raise SameFileError("Source and destination resolve to the same path. Choose a different destination folder.")
+            raise SameFileError(f"Source '{self.source_path}' and destination '{self.destination_path}' resolve to the same path. Choose a different destination folder.")
 
     def execute_command(self) -> CommandResult:
         """executes command while taking tags into consideration"""
@@ -65,7 +66,8 @@ class CopyCommand(BaseCommand):
             else:
                 shutil.copytree(src=self.source_path, dst=self.destination_path / self.source_path.name, dirs_exist_ok=self.force)
         except Exception as e:
-            return CommandResult(status=Status.FAILED, message="Unexpected Error Occurred During Execution", error=str(e))
+            target = self.destination_path / self.source_path.name
+            return CommandResult(status=Status.FAILED, message=f"Failed to copy '{self.source_path}' to '{target}'.", error=str(e))
         return CommandResult(status=Status.SUCCESSFUL, message="Successfully Executed")
 
     

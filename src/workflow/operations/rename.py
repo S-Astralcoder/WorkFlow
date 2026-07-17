@@ -3,7 +3,7 @@ import argparse
 from pathlib import Path
 
 # Internal
-from workflow.exceptions import InvalidFileName, InvalidFileType, SourceNotFoundError
+from workflow.exceptions import CollisionError, InvalidFileName, InvalidFileType, SourceNotFoundError
 from workflow.operations.base import BaseCommand
 from workflow.operations.response import CommandResult, Status
 from workflow.safety import FileSafety
@@ -24,22 +24,37 @@ class RenameCommand(BaseCommand):
 
         if not self.force:
             self._safe_check()
+        elif FileSafety.does_exists(self.new_name):
+            self.new_name = self._get_unique_name(self.new_name)
         
     def _validate_rename_path(self, path : str) -> Path:
         """Same validation but added check for if path exists"""
         source_path = self._validate_path(path=path)
         if not FileSafety.does_exists(path=source_path):
-            raise SourceNotFoundError("Rename target does not exist. Enter the path of an existing file or folder.")
+            raise SourceNotFoundError(f"Cannot rename '{source_path}': the source does not exist.")
         return source_path
 
     def _validate_name(self, new_name : str) -> Path:
         if not FileSafety.check_if_valid_name(name=new_name):
-            raise InvalidFileName("Invalid new name: provide a valid file or folder name without a path.")
+            raise InvalidFileName(f"Cannot rename '{self.path}' to '{new_name}': provide a valid name without a parent path or invalid characters.")
         return self.path.parent / Path(new_name).name
 
     def _safe_check(self):
         if self.is_file and self.path.suffix != Path(self.new_name).suffix:
-            raise InvalidFileType("The new filename uses a different extension. Keep the original extension or use --force to allow the change.")
+            raise InvalidFileType(f"Cannot rename file '{self.path}' to '{self.new_name}': extension '{self.path.suffix}' would change to '{self.new_name.suffix}'. Use --force to allow it.")
+        if FileSafety.does_exists(self.new_name):
+            raise CollisionError(f"Cannot rename '{self.path}' to '{self.new_name}': the target already exists. Use --force to choose an available numbered name.")
+
+    def _get_unique_name(self, requested_path: Path) -> Path:
+        stem = requested_path.stem if self.is_file else requested_path.name
+        suffix = requested_path.suffix if self.is_file else ""
+        number = 2
+
+        while True:
+            candidate = requested_path.parent / f"{stem}{number}{suffix}"
+            if not FileSafety.does_exists(candidate):
+                return candidate
+            number += 1
 
     def execute_command(self):
         if self.dry_run:
@@ -47,7 +62,7 @@ class RenameCommand(BaseCommand):
         try:
             self.path.rename(self.new_name)
         except (OSError, PermissionError) as e:
-            return CommandResult(status=Status.FAILED, message="Unexpected Error Occurred During Execution", error=str(e))
+            return CommandResult(status=Status.FAILED, message=f"Failed to rename '{self.path}' to '{self.new_name}'.", error=str(e))
         return CommandResult(status=Status.SUCCESSFUL, message="Executed Successfully")
         
 

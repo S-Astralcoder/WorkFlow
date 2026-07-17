@@ -19,7 +19,7 @@ class MoveCommand(CopyCommand):
         super()._mandatory_check()
 
         if FileSafety.is_relative_to(path1=self.source_path, path2=self.destination_path):
-            raise InvalidSelfMove("A folder cannot be moved into one of its own descendants. Choose a destination outside the source folder.")
+            raise InvalidSelfMove(f"Cannot move '{self.source_path}' into descendant '{self.destination_path}'. Choose a destination outside the source folder.")
 
     def execute_command(self) -> CommandResult:
         if self.dry_run:
@@ -28,7 +28,8 @@ class MoveCommand(CopyCommand):
         try:
             shutil.move(self.source_path, self.destination_path)
         except (OSError, PermissionError) as e:
-            return CommandResult(status=Status.FAILED, message="Unexpected Error Occurred During Execution", error=str(e))        
+            target = self.destination_path / self.source_path.name
+            return CommandResult(status=Status.FAILED, message=f"Failed to move '{self.source_path}' to '{target}'.", error=str(e))
         return CommandResult(status=Status.SUCCESSFUL, message="Successfully Executed")
 
     

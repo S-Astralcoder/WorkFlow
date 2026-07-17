@@ -32,12 +32,12 @@ class CreateCommand(BaseCommand):
     def _safe_checks(self):
         """A optional safety check to prevent accidental overwrites without permission"""
         if FileSafety.does_exists(path=self.path):
-            raise FileAlreadyExists("An item already exists at the target path. Use --force to allow the existing item to be overwritten.")
+            raise FileAlreadyExists(f"Cannot create '{self.path}': an item already exists at that path. Use --force to keep or reuse it.")
 
     def _check_parent_exists(self):
         """checks it parent for the given path exists"""
         if not self.path.parent.exists():
-            raise ParentNotFount("The target's parent folder does not exist. Use --recursive to create the missing parent folders.")
+            raise ParentNotFount(f"Cannot create '{self.path}': parent folder '{self.path.parent}' does not exist. Use --recursive to create missing parents.")
 
     def execute_command(self) -> CommandResult:
         """just executes what else?"""
@@ -53,7 +53,7 @@ class CreateCommand(BaseCommand):
                 self.path.mkdir(parents=self.recursive, exist_ok=self.force)
         except (OSError, PermissionError) as e:
             print(e)
-            return CommandResult(status=Status.FAILED, message="Unexpected Error Occurred During Execution", error=str(e))
+            return CommandResult(status=Status.FAILED, message=f"Failed to create '{self.path}'.", error=str(e))
         return CommandResult(status=Status.SUCCESSFUL, message="Executed Successfully")
 
 
