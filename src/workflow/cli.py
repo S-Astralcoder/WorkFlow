@@ -6,8 +6,8 @@ from rich.console import Console
 #Internal
 from workflow.command_line import CommandLine
 from workflow.operations import CreateCommand, CopyCommand, MoveCommand, RenameCommand, DeleteCommand
-from workflow.workflow.construct_workflow import WorkFlowConstructor
-from workflow.workflow.sequence_orchestrator import SequenceOperations
+from workflow.sequence_workflow import WorkFlowConstructor
+
 
 
 def permission_func(prompt : str):
@@ -48,7 +48,7 @@ def workflow(args : Optional[List[str]] = None):
                 console.print(result)
         case "run":
             workflow_data = WorkFlowConstructor(args=arg).get_workspace_sequence_data()
-            SequenceOperations(workflow_data=workflow_data)
+            console.print(workflow_data)
         case _:
             console.print("[red] Invalid Operator")
 

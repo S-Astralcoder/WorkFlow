@@ -65,3 +65,14 @@ class WorkflowPathInvalid(SystemExit):
 class InvalidWorkFlowScript(SystemExit):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
+
+
+
+
+class VirtualParentAbsent(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
+class VirtualPathNotExists(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
