@@ -1,0 +1,91 @@
+[workflow]
+name = "virtual state stress test"
+workspace = "./workspace/testspace"
+force = false
+dry_run = true
+allow = true
+show = true
+
+# Build a source tree that exists only in the orchestrator state.
+[[actions]]
+operation = "create"
+type = "folder"
+path = "./virtual_project"
+
+[[actions]]
+operation = "create"
+type = "folder"
+path = "./staging"
+
+[[actions]]
+operation = "create"
+type = "folder"
+path = "./archive"
+
+[[actions]]
+operation = "create"
+type = "file"
+path = "./virtual_project/app.py"
+
+[[actions]]
+operation = "create"
+type = "file"
+path = "./virtual_project/data/input.txt"
+recursive = true
+
+# Copy the virtual folder and all its virtual children.
+[[actions]]
+operation = "copy"
+source_path = "./virtual_project"
+destination_path = "./staging"
+
+# Move the copied virtual folder before anything exists on disk.
+[[actions]]
+operation = "move"
+source_path = "./staging/virtual_project"
+destination_path = "./archive"
+
+# Rename and delete paths produced by the virtual folder move.
+[[actions]]
+operation = "rename"
+path = "./archive/virtual_project/app.py"
+new_name = "main.py"
+
+[[actions]]
+operation = "delete"
+path = "./archive/virtual_project/data/input.txt"
+
+[[actions]]
+operation = "delete"
+path = "./archive/virtual_project/data"
+
+[[actions]]
+operation = "delete"
+path = "./archive/virtual_project/main.py"
+
+[[actions]]
+operation = "delete"
+path = "./archive/virtual_project"
+
+# Perform a second virtual move after several paths have been removed.
+[[actions]]
+operation = "move"
+source_path = "./virtual_project/app.py"
+destination_path = "./archive"
+
+[[actions]]
+operation = "delete"
+path = "./archive/app.py"
+
+# Remove the remaining original virtual tree.
+[[actions]]
+operation = "delete"
+path = "./virtual_project/data/input.txt"
+
+[[actions]]
+operation = "delete"
+path = "./virtual_project/data"
+
+[[actions]]
+operation = "delete"
+path = "./virtual_project"
