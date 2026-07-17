@@ -70,6 +70,14 @@ class LimitationError(SystemExit):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
 
+class OperationOnSelf(SystemExit):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
+class PathNotFound(SystemExit):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
 
 class VirtualParentAbsent(Exception):
     def __init__(self, *args: object) -> None:
