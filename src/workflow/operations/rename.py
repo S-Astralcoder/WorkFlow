@@ -3,7 +3,7 @@ import argparse
 from pathlib import Path
 
 # Internal
-from workflow.exceptions import CollisionError, InvalidFileName, InvalidFileType, SourceNotFoundError
+from workflow.exceptions import CollisionError, InvalidFileName, InvalidFileType, OperationOnSelf, SourceNotFoundError
 from workflow.operations.base import BaseCommand
 from workflow.operations.response import CommandResult, Status
 from workflow.safety import FileSafety
@@ -21,6 +21,8 @@ class RenameCommand(BaseCommand):
 
         self.validate_workspace_scope(workspace=self.workspace, path=self.path)
         self.validate_workspace_scope(workspace=self.workspace, path=self.new_name)
+
+        self._mandatory_check()
 
         if not self.force:
             self._safe_check()
@@ -55,6 +57,10 @@ class RenameCommand(BaseCommand):
             if not FileSafety.does_exists(candidate):
                 return candidate
             number += 1
+
+    def _mandatory_check(self):
+        if FileSafety.same_path(self.path, self.new_name):
+            raise OperationOnSelf("The new name is same as the original name")
 
     def execute_command(self):
         if self.dry_run:

@@ -15,9 +15,7 @@ class MoveCommand(CopyCommand):
     def __init__(self, args: argparse.Namespace) -> None:
         super().__init__(args)
 
-    def _mandatory_check(self):
-        super()._mandatory_check()
-
+    def _check_descendant_destination(self):
         if FileSafety.is_relative_to(path1=self.source_path, path2=self.destination_path):
             raise InvalidSelfMove(f"Cannot move '{self.source_path}' into descendant '{self.destination_path}'. Choose a destination outside the source folder.")
 

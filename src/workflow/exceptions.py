@@ -42,6 +42,10 @@ class InvalidSelfMove(SystemExit):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
 
+class InvalidSelfCopy(SystemExit):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
 class ItemNotFound(SystemExit):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
@@ -75,6 +79,10 @@ class OperationOnSelf(SystemExit):
         super().__init__(*args)
 
 class PathNotFound(SystemExit):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
+class DestinationNotFoundError(SystemExit):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
 

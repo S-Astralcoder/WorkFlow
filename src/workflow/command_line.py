@@ -31,7 +31,7 @@ class CommandLine:
 
     def add_global_tags(self):
         self.arg.add_argument("-a", "--allow", action="store_true", help="skip the confirmation prompt for operations that require approval")
-        self.arg.add_argument("-f", "--force", action="store_true", help="allow overwrites or extension changes; permanently delete instead of using the recycle bin")
+        self.arg.add_argument("-f", "--force", action="store_true", help="allow supported overwrite or extension-change behavior; permanently delete instead of using the recycle bin (not supported for copy or move)")
         self.arg.add_argument("-d", "--dry-run", action="store_true", help="preview the operation without changing the file system")
         self.arg.add_argument("-s", "--show-status", action="store_true", help="display a brief result after execution")
         self.arg.add_argument("-ws", "--workspace", action="store", default=".")

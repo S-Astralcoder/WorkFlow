@@ -40,11 +40,8 @@ class BaseCommand:
         return workspace_path
 
     def _validate_path(self, path : str):
-        """Validate that a path is valid and already exists."""
-        check_path = self._resolve_path(path)
-        if not FileSafety.does_exists(path=check_path):
-            raise WorkspacePathInvalid(f"The given path '{check_path}' does not exist. Choose an existing path.")
-        return check_path
+        """Validate and resolve an operation path."""
+        return self._resolve_path(path)
 
     def validate_workspace_scope(self, workspace : Path, path : Path, inside : bool = True):
         """checks if the action path is outside the workspace. to prevent operations outside of workspace"""

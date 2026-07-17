@@ -5,14 +5,18 @@ import pytest
 from workflow.command_line import CommandLine
 from workflow.exceptions import (
     CollisionError,
+    DestinationNotFoundError,
     FileAlreadyExists,
     InvalidFileName,
     InvalidFileType,
     InvalidItemType,
+    InvalidSelfCopy,
     InvalidSelfMove,
+    ItemNotFound,
     LimitationError,
     OutOfScope,
     SameFileError,
+    SourceNotFoundError,
     WorkspacePathInvalid,
     WorkspaceProtection,
 )
@@ -164,6 +168,48 @@ def test_copy_rejects_file_as_destination(tmp_path: Path) -> None:
         CopyCommand(parse_args(tmp_path, "copy", str(source), str(destination)))
 
 
+@pytest.mark.parametrize("command_class", [CopyCommand, MoveCommand])
+def test_copy_and_move_report_missing_source(
+    tmp_path: Path,
+    command_class: type[CopyCommand],
+) -> None:
+    source = tmp_path / "missing"
+    destination = tmp_path / "destination"
+    destination.mkdir()
+    operation = "copy" if command_class is CopyCommand else "move"
+
+    with pytest.raises(SourceNotFoundError):
+        command_class(
+            parse_args(
+                tmp_path,
+                operation,
+                str(source),
+                str(destination),
+            )
+        )
+
+
+@pytest.mark.parametrize("command_class", [CopyCommand, MoveCommand])
+def test_copy_and_move_report_missing_destination(
+    tmp_path: Path,
+    command_class: type[CopyCommand],
+) -> None:
+    source = tmp_path / "source.txt"
+    destination = tmp_path / "missing"
+    source.touch()
+    operation = "copy" if command_class is CopyCommand else "move"
+
+    with pytest.raises(DestinationNotFoundError):
+        command_class(
+            parse_args(
+                tmp_path,
+                operation,
+                str(source),
+                str(destination),
+            )
+        )
+
+
 def test_copy_detects_name_collision_before_execution(tmp_path: Path) -> None:
     source = tmp_path / "source.txt"
     destination = tmp_path / "destination"
@@ -175,41 +221,45 @@ def test_copy_detects_name_collision_before_execution(tmp_path: Path) -> None:
         CopyCommand(parse_args(tmp_path, "copy", str(source), str(destination)))
 
 
-def test_force_copy_overwrites_colliding_file(tmp_path: Path) -> None:
+@pytest.mark.parametrize(("operation", "command_class"), [("copy", CopyCommand), ("move", MoveCommand)])
+def test_force_does_not_bypass_copy_or_move_collision(
+    tmp_path: Path,
+    operation: str,
+    command_class: type[CopyCommand],
+) -> None:
     source = tmp_path / "source.txt"
     destination = tmp_path / "destination"
-    source.write_text("new", encoding="utf-8")
+    source.write_text("source", encoding="utf-8")
     destination.mkdir()
-    copied_file = destination / source.name
-    copied_file.write_text("old", encoding="utf-8")
-    command = CopyCommand(
-        parse_args(
-            tmp_path,
-            "copy",
-            str(source),
-            str(destination),
-            flags=("--force",),
+    (destination / source.name).write_text("destination", encoding="utf-8")
+
+    with pytest.raises(CollisionError):
+        command_class(
+            parse_args(
+                tmp_path,
+                operation,
+                str(source),
+                str(destination),
+                flags=("--force",),
+            )
         )
-    )
-
-    result = command.execute_command()
-
-    assert result.status is Status.SUCCESSFUL
-    assert copied_file.read_text(encoding="utf-8") == "new"
 
 
-@pytest.mark.parametrize("force", [False, True])
-def test_copy_directory_to_itself_is_always_rejected(
-    tmp_path: Path, force: bool
-) -> None:
+def test_copy_directory_to_itself_is_rejected(tmp_path: Path) -> None:
     source = tmp_path / "source"
     source.mkdir()
-    flags = ("--force",) if force else ()
 
     with pytest.raises(SameFileError):
-        CopyCommand(
-            parse_args(tmp_path, "copy", str(source), str(source), flags=flags)
-        )
+        CopyCommand(parse_args(tmp_path, "copy", str(source), str(source)))
+
+
+def test_copy_directory_into_descendant_is_rejected(tmp_path: Path) -> None:
+    source = tmp_path / "source"
+    descendant = source / "descendant"
+    descendant.mkdir(parents=True)
+
+    with pytest.raises(InvalidSelfCopy):
+        CopyCommand(parse_args(tmp_path, "copy", str(source), str(descendant)))
 
 
 def test_copy_dry_run_does_not_create_destination_item(tmp_path: Path) -> None:
@@ -252,18 +302,14 @@ def test_copy_reports_unexpected_execution_error(
     assert result.error == "copy blocked"
 
 
-@pytest.mark.parametrize("force", [False, True])
-def test_move_directory_into_descendant_is_always_rejected(
-    tmp_path: Path, force: bool
-) -> None:
+def test_move_directory_into_descendant_is_rejected(tmp_path: Path) -> None:
     source = tmp_path / "source"
     descendant = source / "descendant"
     descendant.mkdir(parents=True)
-    flags = ("--force",) if force else ()
 
     with pytest.raises(InvalidSelfMove):
         MoveCommand(
-            parse_args(tmp_path, "move", str(source), str(descendant), flags=flags)
+            parse_args(tmp_path, "move", str(source), str(descendant))
         )
 
 
@@ -317,6 +363,13 @@ def test_rename_rejects_names_containing_path_or_invalid_characters(
 
     with pytest.raises(InvalidFileName):
         RenameCommand(parse_args(tmp_path, "rename", str(source), new_name))
+
+
+def test_rename_reports_missing_source(tmp_path: Path) -> None:
+    source = tmp_path / "missing.txt"
+
+    with pytest.raises(SourceNotFoundError):
+        RenameCommand(parse_args(tmp_path, "rename", str(source), "renamed.txt"))
 
 
 def test_rename_rejects_extension_change_without_force(tmp_path: Path) -> None:
@@ -462,6 +515,13 @@ def test_delete_denied_by_user_is_skipped(tmp_path: Path) -> None:
 
     assert result.status is Status.SKIPPED
     assert target.exists()
+
+
+def test_delete_reports_missing_target(tmp_path: Path) -> None:
+    target = tmp_path / "missing.txt"
+
+    with pytest.raises(ItemNotFound):
+        DeleteCommand(parse_args(tmp_path, "delete", str(target)))
 
 
 def test_delete_allow_flag_bypasses_permission_callback(
