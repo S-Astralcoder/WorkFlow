@@ -11,6 +11,7 @@ from workflow.operations import CreateCommand, CopyCommand, MoveCommand, RenameC
 from workflow.operations.response import Status
 from workflow.sequence_workflow import SequenceOperations, WorkFlowConstructor
 from workflow.sequence_workflow.virtual_tree import to_rich_tree
+from workflow.sequence_workflow.workflow import ExecuteWorkflow
 
 
 
@@ -94,6 +95,7 @@ def workflow_executor(arg : argparse.Namespace, console : Console) -> int:
             arg.allow = True
         
         with console.status("Executing Workflow operations.."):
-            pass
+            workflow_execute = ExecuteWorkflow(workflow_data=workflow_data, args=arg)
+            workflow_execute.execute_commands()             
 
     return 1

@@ -83,6 +83,7 @@ class ExecuteWorkflow:
         return str(path)
 
     def execute_commands(self) -> None:
+        self.construct_command()
         for id, command in enumerate(self.sequence_execution_commands, start=1):
             response = workflow(command)
             if response == 1:
