@@ -22,7 +22,11 @@ class MoveCommand(CopyCommand):
     def execute_command(self) -> CommandResult:
         if self.dry_run:
             item_type = "file" if self.is_file else "folder"
-            return CommandResult(status=Status.DRY_RUN, message=f"Would Move {item_type} {self.source_path.name} to {self.destination_path}")
+            target = self.destination_path / self.source_path.name
+            return CommandResult(
+                status=Status.DRY_RUN,
+                message=f"Would move {item_type} '{self.source_path}' to '{target}'.",
+            )
         try:
             shutil.move(self.source_path, self.destination_path)
         except (OSError, PermissionError) as e:

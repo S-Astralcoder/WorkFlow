@@ -1,0 +1,7 @@
+[workflow
+name = "invalid TOML syntax"
+workspace = "."
+
+[[actions]]
+operation = "delete"
+path = "./unused.txt"

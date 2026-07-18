@@ -33,7 +33,11 @@ class DeleteCommand(BaseCommand):
     def execute_command(self, permission_func : Callable[[str],bool]) -> CommandResult:
         """ permission_func : a function from cli to request permission from user to execute, only if allow is false"""
         if self.dry_run:
-            return CommandResult(status=Status.DRY_RUN, message=f"Would Delete : {self.path}")
+            item_type = "file" if self.is_file else "folder"
+            return CommandResult(
+                status=Status.DRY_RUN,
+                message=f"Would delete {item_type} '{self.path}'.",
+            )
         try:
             if self.allow or permission_func("[red]Do you want to execute this command"):
                 if self.force: # performs permanent delete without shifting to trash bin if true
@@ -55,6 +59,9 @@ class DeleteCommand(BaseCommand):
                     )
         except (OSError, PermissionError) as e:
             return CommandResult(status=Status.FAILED, message=f"Failed to delete '{self.path}'.", error=str(e))
-        return CommandResult(status=Status.SKIPPED, message="Execution Skipped")
+        return CommandResult(
+            status=Status.SKIPPED,
+            message=f"Skipped deletion of '{self.path}' because permission was not granted.",
+        )
         
     

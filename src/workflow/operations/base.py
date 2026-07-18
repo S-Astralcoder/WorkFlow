@@ -36,7 +36,7 @@ class BaseCommand:
         if not FileSafety.does_exists(path=workspace_path):
             raise WorkspacePathInvalid(f"Workspace '{workspace_path}' does not exist. Choose an existing folder with --workspace.")
         if FileSafety.check_if_file(path=workspace_path):
-            raise WorkspacePathInvalid(f"Workspace '{workspace_path}' should be a folder. Choose an folder with --workspace.")
+            raise WorkspacePathInvalid(f"Workspace '{workspace_path}' is a file. Choose a folder with --workspace.")
         return workspace_path
 
     def _validate_path(self, path : str):

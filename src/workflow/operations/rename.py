@@ -60,11 +60,17 @@ class RenameCommand(BaseCommand):
 
     def _mandatory_check(self):
         if FileSafety.same_path(self.path, self.new_name):
-            raise OperationOnSelf("The new name is same as the original name")
+            raise OperationOnSelf(
+                f"Cannot rename '{self.path}' to '{self.new_name.name}': "
+                "the new name resolves to the current path."
+            )
 
     def execute_command(self):
         if self.dry_run:
-            return CommandResult(status=Status.DRY_RUN, message=f"Would Rename {self.path.name} to {self.new_name.name}")
+            return CommandResult(
+                status=Status.DRY_RUN,
+                message=f"Would rename '{self.path}' to '{self.new_name}'.",
+            )
         try:
             self.path.rename(self.new_name)
         except (OSError, PermissionError) as e:

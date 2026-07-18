@@ -1,0 +1,9 @@
+[workflow]
+name = "invalid missing field"
+workspace = "./examples/workspace"
+dry_run = true
+
+# destination_path is required for copy actions.
+[[actions]]
+operation = "copy"
+source_path = "./source.txt"

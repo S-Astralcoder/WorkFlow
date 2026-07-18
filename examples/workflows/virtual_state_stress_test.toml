@@ -1,0 +1,90 @@
+[workflow]
+name = "virtual state stress test"
+workspace = "./examples/workspace"
+force = false
+dry_run = true
+allow = false
+show = false
+
+[[actions]]
+operation = "create"
+type = "folder"
+path = "./workflow-stress-demo/source"
+recursive = true
+
+[[actions]]
+operation = "create"
+type = "file"
+path = "./workflow-stress-demo/source/app.py"
+
+[[actions]]
+operation = "create"
+type = "file"
+path = "./workflow-stress-demo/source/data/input.txt"
+recursive = true
+
+[[actions]]
+operation = "create"
+type = "folder"
+path = "./workflow-stress-demo/staging"
+
+[[actions]]
+operation = "create"
+type = "folder"
+path = "./workflow-stress-demo/archive"
+
+[[actions]]
+operation = "copy"
+source_path = "./workflow-stress-demo/source"
+destination_path = "./workflow-stress-demo/staging"
+
+[[actions]]
+operation = "move"
+source_path = "./workflow-stress-demo/staging/source"
+destination_path = "./workflow-stress-demo/archive"
+
+[[actions]]
+operation = "rename"
+path = "./workflow-stress-demo/archive/source/app.py"
+new_name = "main.py"
+
+[[actions]]
+operation = "delete"
+path = "./workflow-stress-demo/archive/source/data/input.txt"
+
+[[actions]]
+operation = "delete"
+path = "./workflow-stress-demo/archive/source/data"
+
+[[actions]]
+operation = "delete"
+path = "./workflow-stress-demo/archive/source/main.py"
+
+[[actions]]
+operation = "delete"
+path = "./workflow-stress-demo/archive/source"
+
+[[actions]]
+operation = "move"
+source_path = "./workflow-stress-demo/source/app.py"
+destination_path = "./workflow-stress-demo/archive"
+
+[[actions]]
+operation = "delete"
+path = "./workflow-stress-demo/archive/app.py"
+
+[[actions]]
+operation = "delete"
+path = "./workflow-stress-demo/source/data/input.txt"
+
+[[actions]]
+operation = "delete"
+path = "./workflow-stress-demo/source/data"
+
+[[actions]]
+operation = "delete"
+path = "./workflow-stress-demo/source"
+
+[[actions]]
+operation = "delete"
+path = "./workflow-stress-demo"

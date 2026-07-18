@@ -1,0 +1,9 @@
+[workflow]
+name = "invalid unsupported operation"
+workspace = "./examples/workspace"
+dry_run = true
+
+[[actions]]
+operation = "merge"
+source_path = "./source"
+destination_path = "./destination"

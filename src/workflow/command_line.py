@@ -63,7 +63,7 @@ class CommandLine:
 
     def add_workflow_command_line(self):
         workflow_parser = self.operations.add_parser("run")
-        workflow_parser.add_argument("workflow_path", help="Path to workflow script")
+        workflow_parser.add_argument("workflow_path", help="path to the TOML workflow script")
 
     def get_parser(self, args : Optional[List[str]] = None):
         return self.arg.parse_args(args=args)

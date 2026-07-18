@@ -48,7 +48,11 @@ class CopyCommand(BaseCommand):
         """Again optional safety check. to prevent overwrites"""
         if any([self.source_path.name == item.name for item in self.destination_path.iterdir()]):
             target = self.destination_path / self.source_path.name
-            raise CollisionError(f"Cannot copy or move '{self.source_path}' to '{self.destination_path}': target '{target}' already exists.--force to overwrite is disabled in this version.")
+            raise CollisionError(
+                f"Cannot copy or move '{self.source_path}' to '{self.destination_path}': "
+                f"target '{target}' already exists. Overwriting with --force is disabled "
+                "for copy and move in this version."
+            )
 
     def _mandatory_check(self):
         """Check that is very import to prevent cascaded copy loop (i made that term up)"""
@@ -64,7 +68,11 @@ class CopyCommand(BaseCommand):
         """executes command while taking tags into consideration"""
         if self.dry_run:
             item_type = "file" if self.is_file else "folder"
-            return CommandResult(status=Status.DRY_RUN, message=f"Would Copy {item_type} {self.source_path.name} to {self.destination_path}")
+            target = self.destination_path / self.source_path.name
+            return CommandResult(
+                status=Status.DRY_RUN,
+                message=f"Would copy {item_type} '{self.source_path}' to '{target}'.",
+            )
         try:
             if self.is_file:
                 shutil.copy2(src=self.source_path, dst=self.destination_path / self.source_path.name)

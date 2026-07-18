@@ -233,7 +233,7 @@ def test_workflow_reports_an_invalid_operation_from_parser(
     exit_code = cli.workflow([])
 
     assert exit_code == 1
-    assert "Invalid Operator" in capsys.readouterr().out
+    assert "Unsupported operation" in capsys.readouterr().out
 
 
 def test_workflow_accepts_no_explicit_argument_list(

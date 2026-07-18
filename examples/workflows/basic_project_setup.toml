@@ -1,0 +1,53 @@
+[workflow]
+name = "basic project setup"
+workspace = "./examples/workspace"
+force = false
+dry_run = true
+allow = false
+show = true
+
+# Create a small project using paths that exist only in the simulated state.
+[[actions]]
+operation = "create"
+type = "folder"
+path = "./workflow-demo"
+
+[[actions]]
+operation = "create"
+type = "folder"
+path = "./workflow-demo/src"
+
+[[actions]]
+operation = "create"
+type = "folder"
+path = "./workflow-demo/docs"
+
+[[actions]]
+operation = "create"
+type = "folder"
+path = "./workflow-demo/archive"
+
+[[actions]]
+operation = "create"
+type = "file"
+path = "./workflow-demo/src/main.py"
+
+# Exercise copy, move, rename, and delete against the virtual state.
+[[actions]]
+operation = "copy"
+source_path = "./workflow-demo/src/main.py"
+destination_path = "./workflow-demo/docs"
+
+[[actions]]
+operation = "move"
+source_path = "./workflow-demo/docs/main.py"
+destination_path = "./workflow-demo/archive"
+
+[[actions]]
+operation = "rename"
+path = "./workflow-demo/archive/main.py"
+new_name = "example.py"
+
+[[actions]]
+operation = "delete"
+path = "./workflow-demo/docs"

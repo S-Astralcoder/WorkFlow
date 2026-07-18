@@ -1,0 +1,12 @@
+[workflow]
+name = "expected missing source failure"
+workspace = "./examples/workspace"
+force = false
+dry_run = true
+allow = false
+show = true
+
+[[actions]]
+operation = "copy"
+source_path = "./this-source-should-not-exist.txt"
+destination_path = "."

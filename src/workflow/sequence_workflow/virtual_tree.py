@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from typing import Literal
 
 from rich.tree import Tree
+from rich.text import Text
 
 from workflow.exceptions import VirtualAlreadyExists, VirtualCollisionError, VirtualDestinationNotExists, VirtualInvalidItemType, VirtualNameInvalid, VirtualOperationOnSelf, VirtualParentAbsent, VirtualPathNotExists, VirtualRenameAlreadyExists, VirtualRootProtection, VirtualSourceNotExists, VirtualSuffixMissMatch, VirtualTypeCollision
 from workflow.safety import FileSafety
@@ -22,8 +23,8 @@ Note :
 
 
 def to_rich_tree(node: Node) -> Tree:
-    icon = "📁" if node.type == "folder" else "📄"
-    tree = Tree(f"{icon} {node.name}")
+    item_label = "DIR" if node.type == "folder" else "FILE"
+    tree = Tree(Text(f"[{item_label}] {node.name}"))
 
     for child in node.child.values():
         tree.add(to_rich_tree(child))

@@ -64,7 +64,7 @@ def workflow(args : Optional[List[str]] = None) -> int:
         case "run":
             return workflow_executor(arg=arg, console=console)
         case _:
-            console.print("[red] Invalid Operator")
+            console.print("[red]Unsupported operation. Use --help to view available commands.")
             return 1
 
     return 0

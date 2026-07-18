@@ -43,7 +43,10 @@ class CreateCommand(BaseCommand):
         """just executes what else?"""
         if self.dry_run:
             item_type = "file" if self.is_file else "folder"
-            return CommandResult(status=Status.DRY_RUN, message=f"Would Create {item_type} : {self.path}")
+            return CommandResult(
+                status=Status.DRY_RUN,
+                message=f"Would create {item_type} '{self.path}'.",
+            )
         try:
             if self.is_file:
                 if self.recursive:

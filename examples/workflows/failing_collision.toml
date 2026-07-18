@@ -1,0 +1,23 @@
+[workflow]
+name = "expected collision failure"
+workspace = "./examples/workspace"
+force = false
+dry_run = true
+allow = false
+show = true
+
+[[actions]]
+operation = "create"
+type = "folder"
+path = "./workflow-failure-demo"
+
+[[actions]]
+operation = "create"
+type = "file"
+path = "./workflow-failure-demo/report.txt"
+
+# This action intentionally collides with action 2.
+[[actions]]
+operation = "create"
+type = "file"
+path = "./workflow-failure-demo/report.txt"
