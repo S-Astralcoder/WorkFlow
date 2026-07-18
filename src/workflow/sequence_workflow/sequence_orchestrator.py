@@ -1,8 +1,6 @@
 from pathlib import Path
 from typing import Any
 
-from rich.console import Console
-
 from workflow.exceptions import (
     VirtualAlreadyExists,
     VirtualCollisionError,
@@ -22,7 +20,7 @@ from workflow.exceptions import (
     WorkFlowPathOutOfScope,
 )
 from workflow.safety import FileSafety
-from workflow.sequence_workflow.virtual_tree import VirtualTree, to_rich_tree
+from workflow.sequence_workflow.virtual_tree import VirtualTree
 
 
 class SequenceOperations:
@@ -47,8 +45,6 @@ class SequenceOperations:
             if FileSafety.check_if_file(path=child):
                 end_type = "file"
             self.virtual_tree.add_path(relative_path=relative_path.parts, end_type=end_type, recursive=True, force=True)
-        
-        Console().print(to_rich_tree(self.virtual_tree.root_node))
 
     def validate_create_and_update_state(self, action_data: dict[Any, Any]) -> None:
         path = Path(action_data["path"])

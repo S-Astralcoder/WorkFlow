@@ -153,3 +153,11 @@ class VirtualSuffixMissMatch(Exception):
 class VirtualTypeCollision(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
+
+class WorkflowInvalidOperation(SystemExit):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
+class ForceStop(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
