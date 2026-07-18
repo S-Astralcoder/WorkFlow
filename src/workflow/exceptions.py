@@ -68,6 +68,19 @@ class WorkflowPathInvalid(SystemExit):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
 
+
+class WorkFlowInvalidOperation(SystemExit):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
+
+class WorkFlowPathOutOfScope(SystemExit):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+class WorkFlowError(SystemExit):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
 class InvalidWorkFlowScript(SystemExit):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
