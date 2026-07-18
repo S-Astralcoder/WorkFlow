@@ -7,7 +7,7 @@ from typing import Literal
 
 from rich.tree import Tree
 
-from workflow.exceptions import VirtualCollisionError, VirtualDestinationNotExists, VirtualInvalidItemType, VirtualOperationOnSelf, VirtualParentAbsent, VirtualPathNotExists, VirtualRenameAlreadyExists, VirtualSourceNotExists
+from workflow.exceptions import VirtualAlreadyExists, VirtualCollisionError, VirtualDestinationNotExists, VirtualInvalidItemType, VirtualOperationOnSelf, VirtualParentAbsent, VirtualPathNotExists, VirtualRenameAlreadyExists, VirtualRootProtection, VirtualSourceNotExists
 
 def to_rich_tree(node: Node) -> Tree:
     icon = "📁" if node.type == "folder" else "📄"
@@ -31,12 +31,16 @@ class VirtualTree:
         self.root_node = Node(name=root_name, type="folder", parent=None)
 
     def add_path(self, relative_path : list[str], end_type : Literal["file", "folder"], recursive : bool = False) -> bool:
+        self._validate_not_root(relative_path)
+        if self.path_exists(relative_path=relative_path):
+            raise VirtualAlreadyExists("The given path already exists")
         current_node = self.root_node
         tmp_node : Node | None
-        for node_name in relative_path:
+        for index, node_name in enumerate(relative_path):
             tmp_node = current_node.child.get(node_name)
             if tmp_node is None:
-                if relative_path[-1] == node_name or recursive:
+                is_target = (index == (len(relative_path) - 1))
+                if is_target or recursive:
                     if current_node.type == "file":
                         raise VirtualInvalidItemType("Can't create a item inside a file")
                     current_node.child.setdefault(node_name, Node(name=node_name, type="folder", parent=current_node))
@@ -51,6 +55,7 @@ class VirtualTree:
         return True
 
     def remove_path(self, relative_path : list[str]) -> bool:
+        self._validate_not_root(relative_path)
         current_node = self.root_node
         tmp_node : Node | None
         for node_name in relative_path:
@@ -68,6 +73,7 @@ class VirtualTree:
 
 
     def copy_path(self, relative_source_path : list[str], relative_destination_path : list[str]):
+        self._validate_not_root(relative_source_path)
         self.validate_pointing_inside(relative_source_path, relative_destination_path)
         
         source_node = self.root_node
@@ -105,6 +111,7 @@ class VirtualTree:
         return new_node
         
     def move_path(self, relative_source_path : list[str], relative_destination_path : list[str]):
+        self._validate_not_root(relative_source_path)
         self.validate_pointing_inside(relative_source_path, relative_destination_path)
         source_node = self.root_node
         tmp_source_node : Node | None
@@ -140,6 +147,7 @@ class VirtualTree:
             raise VirtualOperationOnSelf("Operation on itself is invalid") 
 
     def rename_path_node(self, relative_path : list[str], new_name : str) -> bool:
+        self._validate_not_root(relative_path)
         current_node = self.root_node
         tmp_node : Node | None
         for node_name in relative_path:
@@ -169,7 +177,20 @@ class VirtualTree:
             if tmp_node is None:
                 return False
             current_node = tmp_node
-        return current_node.type == type    
+        return current_node.type == type   
 
+    def path_exists(self, relative_path : list[str]):
+        current_node = self.root_node
+        tmp_node : Node | None
+        for node_name in relative_path:
+            tmp_node = current_node.child.get(node_name)
+            if tmp_node is None:
+                return False
+            current_node = tmp_node
+        return True
+
+    def _validate_not_root(self, relative_path: list[str]) -> None:
+        if not relative_path:
+            raise VirtualRootProtection("The virtual workspace root cannot be modified")
         
     

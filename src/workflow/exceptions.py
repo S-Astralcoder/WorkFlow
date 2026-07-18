@@ -114,3 +114,15 @@ class VirtualCollisionError(Exception):
 class VirtualOperationOnSelf(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
+
+class VirtualInvalidItemType(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
+class VirtualAlreadyExists(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
+class VirtualRootProtection(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
