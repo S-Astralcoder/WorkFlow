@@ -7,7 +7,7 @@ from rich.console import Console
 from workflow.command_line import CommandLine
 from workflow.operations import CreateCommand, CopyCommand, MoveCommand, RenameCommand, DeleteCommand
 from workflow.operations.response import Status
-from workflow.sequence_workflow import WorkFlowConstructor
+from workflow.sequence_workflow import SequenceOperations, WorkFlowConstructor
 
 
 
@@ -60,6 +60,7 @@ def workflow(args : Optional[List[str]] = None) -> int:
         case "run":
             workflow_data = WorkFlowConstructor(args=arg).get_workspace_sequence_data()
             console.print(workflow_data)
+            SequenceOperations(workflow_data=workflow_data)
         case _:
             console.print("[red] Invalid Operator")
             return 1

@@ -1,3 +1,5 @@
+
+
 class InvalidFilePath(SystemExit):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
@@ -124,5 +126,17 @@ class VirtualAlreadyExists(Exception):
         super().__init__(*args)
 
 class VirtualRootProtection(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
+class VirtualNameInvalid(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
+class VirtualSuffixMissMatch(Exception):
+    def __init__(self, *args: object) -> None:
+        super().__init__(*args)
+
+class VirtualTypeCollision(Exception):
     def __init__(self, *args: object) -> None:
         super().__init__(*args)
