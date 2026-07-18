@@ -69,33 +69,42 @@ def workflow(args : Optional[List[str]] = None) -> int:
 
     return 0
 
-
 def workflow_executor(arg : argparse.Namespace, console : Console) -> int:
     workflow_data = WorkFlowConstructor(args=arg).get_workspace_sequence_data()
     sequence_orchestrator = SequenceOperations(workflow_data=workflow_data)
     with console.status(status="[green]Simulating Workflow operation.."):
         sequence_orchestrator.load_workspace_virtual_tree()
         sequence_orchestrator.validate_sequence_operation()
-        time.sleep(2)
-    if sequence_orchestrator.error_cache:
-        console.print("[red]Simulation Finished with error..")
-        for keys, values in sequence_orchestrator.error_cache.items():
-            console.print(f"Action id {keys} : {values}")
-        return 1
-    else:
-        console.print("[green]Simulation Passed successfully, Displaying simulation end results")
-        console.print(to_rich_tree(sequence_orchestrator.virtual_tree.root_node))
-        if not permission_func(prompt="[yellow]Would you like to execute this workflow"):
-            console.print("[yellow]Permission Not granted. Exiting..")
-            return 0
-        if not sequence_orchestrator.allow:
-            if not permission_func(prompt="[yellow]To continue. Please grant destructive actions permission, after reviewing the simulated end result"):
-                console.print("[yellow]Permission Not granted. Exiting..")
-                return 0
-            arg.allow = True
-        
-        with console.status("Executing Workflow operations.."):
-            workflow_execute = ExecuteWorkflow(workflow_data=workflow_data, args=arg)
-            workflow_execute.execute_commands()             
+        time.sleep(1)
 
-    return 1
+    if sequence_orchestrator.error_cache:
+        console.print("[yellow]Simulated state after applying all valid actions:")
+    else:
+        console.print("[green]Simulation passed. Simulated final workspace state:")
+    console.print(to_rich_tree(sequence_orchestrator.virtual_tree.root_node))
+
+    if sequence_orchestrator.error_cache:
+        console.print("[red]Workflow simulation found errors. No filesystem changes were made.")
+        for action_id, error in sequence_orchestrator.error_cache.items():
+            console.print(f"[red]Action {action_id}:[/red] {error}")
+        return 1
+
+    if sequence_orchestrator.dry_run:
+        console.print("[yellow]Workflow dry run complete. No filesystem changes were made.")
+        return 0
+
+    if not permission_func(prompt="[yellow]Execute the simulated workflow now?"):
+        console.print("[yellow]Workflow execution cancelled. No filesystem changes were made.")
+        return 0
+    if not sequence_orchestrator.allow:
+        if not permission_func(prompt="[yellow]Grant permission for destructive actions in this workflow?"):
+            console.print("[yellow]Destructive-action permission was not granted. Workflow execution cancelled.")
+            return 0
+        arg.allow = True
+    
+    console.print("Executing workflow actions...")
+    workflow_execute = ExecuteWorkflow(workflow_data=workflow_data, args=arg)
+    workflow_execute.execute_commands()
+
+    console.print("[green]Workflow executed successfully.")
+    return 0

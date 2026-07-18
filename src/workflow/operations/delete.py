@@ -41,10 +41,18 @@ class DeleteCommand(BaseCommand):
                         os.remove(self.path)
                     else:
                         shutil.rmtree(self.path)
-                    return CommandResult(status=Status.SUCCESSFUL, message="Delete Permanently")
+                    item_type = "file" if self.is_file else "folder"
+                    return CommandResult(
+                        status=Status.SUCCESSFUL,
+                        message=f"Permanently deleted {item_type} '{self.path}'.",
+                    )
                 else: # moves to trash bin
                     send2trash.send2trash(self.path)
-                    return CommandResult(status=Status.SUCCESSFUL, message="Moved to bin")
+                    item_type = "file" if self.is_file else "folder"
+                    return CommandResult(
+                        status=Status.SUCCESSFUL,
+                        message=f"Moved {item_type} '{self.path}' to the Recycle Bin.",
+                    )
         except (OSError, PermissionError) as e:
             return CommandResult(status=Status.FAILED, message=f"Failed to delete '{self.path}'.", error=str(e))
         return CommandResult(status=Status.SKIPPED, message="Execution Skipped")

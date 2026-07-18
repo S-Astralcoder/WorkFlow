@@ -111,6 +111,7 @@ def test_force_create_does_not_truncate_existing_file(tmp_path: Path) -> None:
     result = command.execute_command()
 
     assert result.status is Status.SUCCESSFUL
+    assert result.message == f"Created file '{target}'."
     assert target.read_text(encoding="utf-8") == "keep me"
 
 
@@ -283,6 +284,23 @@ def test_copy_dry_run_does_not_create_destination_item(tmp_path: Path) -> None:
     assert not (destination / source.name).exists()
 
 
+def test_copy_success_reports_source_and_target(tmp_path: Path) -> None:
+    source = tmp_path / "source.txt"
+    source.write_text("content", encoding="utf-8")
+    destination = tmp_path / "destination"
+    destination.mkdir()
+    target = destination / source.name
+    command = CopyCommand(
+        parse_args(tmp_path, "copy", str(source), str(destination))
+    )
+
+    result = command.execute_command()
+
+    assert result.status is Status.SUCCESSFUL
+    assert result.message == f"Copied file '{source}' to '{target}'."
+    assert target.read_text(encoding="utf-8") == "content"
+
+
 def test_copy_reports_unexpected_execution_error(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -333,6 +351,24 @@ def test_move_dry_run_preserves_source(tmp_path: Path) -> None:
     assert result.status is Status.DRY_RUN
     assert source.exists()
     assert not (destination / source.name).exists()
+
+
+def test_move_success_reports_source_and_target(tmp_path: Path) -> None:
+    source = tmp_path / "source.txt"
+    source.write_text("content", encoding="utf-8")
+    destination = tmp_path / "destination"
+    destination.mkdir()
+    target = destination / source.name
+    command = MoveCommand(
+        parse_args(tmp_path, "move", str(source), str(destination))
+    )
+
+    result = command.execute_command()
+
+    assert result.status is Status.SUCCESSFUL
+    assert result.message == f"Moved file '{source}' to '{target}'."
+    assert not source.exists()
+    assert target.read_text(encoding="utf-8") == "content"
 
 
 def test_move_reports_unexpected_execution_error(
@@ -414,6 +450,7 @@ def test_force_rename_uses_next_available_numbered_file_name(tmp_path: Path) -> 
     result = command.execute_command()
 
     assert result.status is Status.SUCCESSFUL
+    assert result.message == f"Renamed '{source}' to '{expected_target}'."
     assert command.new_name == expected_target
     assert expected_target.read_text(encoding="utf-8") == "source"
     assert target.read_text(encoding="utf-8") == "target"
@@ -550,6 +587,7 @@ def test_delete_allow_flag_bypasses_permission_callback(
     result = command.execute_command(unexpected_prompt)
 
     assert result.status is Status.SUCCESSFUL
+    assert result.message == f"Permanently deleted file '{target}'."
     assert removed == [target]
 
 
@@ -590,6 +628,7 @@ def test_non_force_delete_uses_recycle_bin(
     result = command.execute_command(lambda _prompt: False)
 
     assert result.status is Status.SUCCESSFUL
+    assert result.message == f"Moved file '{target}' to the Recycle Bin."
     assert trashed == [target]
 
 

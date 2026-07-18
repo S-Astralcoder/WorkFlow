@@ -28,6 +28,11 @@ class MoveCommand(CopyCommand):
         except (OSError, PermissionError) as e:
             target = self.destination_path / self.source_path.name
             return CommandResult(status=Status.FAILED, message=f"Failed to move '{self.source_path}' to '{target}'.", error=str(e))
-        return CommandResult(status=Status.SUCCESSFUL, message="Successfully Executed")
+        item_type = "file" if self.is_file else "folder"
+        target = self.destination_path / self.source_path.name
+        return CommandResult(
+            status=Status.SUCCESSFUL,
+            message=f"Moved {item_type} '{self.source_path}' to '{target}'.",
+        )
 
     

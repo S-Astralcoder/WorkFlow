@@ -2,9 +2,9 @@
 name = "virtual state stress test"
 workspace = "./workspace/testspace"
 force = false
-dry_run = true
+dry_run = false
 allow = true
-show = true
+show = false
 
 # Build a source tree that exists only in the orchestrator state.
 [[actions]]

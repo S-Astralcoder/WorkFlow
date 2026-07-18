@@ -1,5 +1,5 @@
 from argparse import Namespace
-from typing import ClassVar
+from typing import Any, ClassVar
 
 import pytest
 
@@ -151,6 +151,37 @@ def test_workflow_always_displays_failed_result(
     assert "creation blocked" in output
 
 
+@pytest.mark.parametrize(
+    ("status", "label"),
+    [
+        (Status.SUCCESSFUL, "SUCCESS"),
+        (Status.FAILED, "FAILED"),
+        (Status.DRY_RUN, "DRY RUN"),
+        (Status.SKIPPED, "SKIPPED"),
+    ],
+)
+def test_workflow_displays_readable_status_feedback(
+    status: Status,
+    label: str,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    stub_parser(monkeypatch, parser_result("create", show_status=True))
+    monkeypatch.setattr(cli, "CreateCommand", StubCommand)
+    monkeypatch.setattr(
+        StubCommand,
+        "result",
+        CommandResult(status=status, message="Readable operation message", error="specific reason"),
+    )
+
+    cli.workflow([])
+
+    output = capsys.readouterr().out
+    assert f"{label}: Readable operation message" in output
+    assert "Reason: specific reason" in output
+    assert "status=<Status" not in output
+
+
 def test_main_exits_with_workflow_result(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -213,3 +244,61 @@ def test_workflow_accepts_no_explicit_argument_list(
     cli.workflow()
 
     assert received_args == [None]
+
+
+def test_workflow_dry_run_stops_after_displaying_simulation(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    workflow_data: dict[str, Any] = {
+        "meta-data": {"dry_run": True},
+        "actions": [],
+    }
+
+    class StubConstructor:
+        def __init__(self, args: Namespace) -> None:
+            self.args = args
+
+        def get_workspace_sequence_data(self) -> dict[str, object]:
+            return workflow_data
+
+    class StubVirtualTree:
+        root_node = object()
+
+    class StubSequenceOperations:
+        def __init__(self, workflow_data: dict[str, object]) -> None:
+            self.workflow_data = workflow_data
+            self.virtual_tree = StubVirtualTree()
+            self.error_cache: dict[int, object] = {}
+            self.dry_run = True
+            self.allow = False
+
+        def load_workspace_virtual_tree(self) -> None:
+            return None
+
+        def validate_sequence_operation(self) -> None:
+            return None
+
+    def unexpected_call(*_args: object, **_kwargs: object) -> None:
+        raise AssertionError("physical workflow execution must not run during a dry run")
+
+    def render_tree(_node: object) -> str:
+        return "SIMULATED TREE"
+
+    def no_sleep(_seconds: float) -> None:
+        return None
+
+    monkeypatch.setattr(cli, "WorkFlowConstructor", StubConstructor)
+    monkeypatch.setattr(cli, "SequenceOperations", StubSequenceOperations)
+    monkeypatch.setattr(cli, "to_rich_tree", render_tree)
+    monkeypatch.setattr(cli.time, "sleep", no_sleep)
+    monkeypatch.setattr(cli, "permission_func", unexpected_call)
+    monkeypatch.setattr(cli, "ExecuteWorkflow", unexpected_call)
+
+    exit_code = cli.workflow_executor(arg=Namespace(), console=cli.Console())
+
+    output = capsys.readouterr().out
+    assert exit_code == 0
+    assert "SIMULATED TREE" in output
+    assert "dry run complete" in output
+    assert "No filesystem changes were made" in output

@@ -43,7 +43,7 @@ def test_constructs_every_operation_with_allow_and_matching_paths(tmp_path: Path
     for parsed in parsed_commands:
         assert parsed.allow is True
         assert parsed.force is True
-        assert parsed.dry_run is True
+        assert parsed.dry_run is False
         assert parsed.show_status is True
         assert Path(parsed.workspace) == workspace.resolve()
 

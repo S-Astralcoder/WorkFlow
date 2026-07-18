@@ -69,7 +69,10 @@ class RenameCommand(BaseCommand):
             self.path.rename(self.new_name)
         except (OSError, PermissionError) as e:
             return CommandResult(status=Status.FAILED, message=f"Failed to rename '{self.path}' to '{self.new_name}'.", error=str(e))
-        return CommandResult(status=Status.SUCCESSFUL, message="Executed Successfully")
+        return CommandResult(
+            status=Status.SUCCESSFUL,
+            message=f"Renamed '{self.path}' to '{self.new_name}'.",
+        )
         
 
 
